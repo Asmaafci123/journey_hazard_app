@@ -36,7 +36,9 @@ class  SendMobileWidgetState extends State< SendMobileWidget> {
   List<CountryModel> countries =  [];
 
   LanguageModel selectedLang;
-  List<LanguageModel> languages =  [ LanguageModel(code: 'ar',lang: 'arabic'), LanguageModel(code: 'en',lang: 'english'), LanguageModel(code: 'fil',lang: 'filipino')];
+  List<LanguageModel> languages =  [ LanguageModel(code: 'ar',lang: 'arabic'),
+    LanguageModel(code: 'en',lang: 'english'),LanguageModel(code: 'fil',lang: 'filipino'),
+    LanguageModel(code: 'hi',lang: 'hindi'),LanguageModel(code: 'ur',lang: 'urdu')];
 
   final TextEditingController controller = TextEditingController();
   String initialCountry = 'EG';

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:journeyhazard/core/bloc_observer.dart';
 import 'package:localize_and_translate/localize_and_translate.dart';
+import 'core/constants.dart';
+import 'core/services/local_storage/local_storage_service.dart';
 import 'core/services/navigation_service/navigation_service.dart';
 import 'core/sqllite/sqlite_api.dart';
+import 'features/login/data/models/user.dart';
 import 'features/mobile/presentation/pages/send-mobile-page.dart';
 import 'features/home.dart';
 import 'features/login/presentation/pages/login-page.dart';
@@ -18,16 +22,25 @@ import 'package:wakelock/wakelock.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Bloc.observer = MyBlocObserver();
 
   await translator.init(
     localeDefault: LocalizationDefaultType.device,
-    languagesList: <String>['ar', 'en', 'fil'],
+    languagesList: <String>['ar', 'en', 'fil','hi','ur'],
     assetsDirectory: 'assets/langs/',
     apiKeyGoogle: '<Key>', // NOT YET TESTED
   ); // intialize
+  await CacheHelper.init();
+  shipmentId = CacheHelper.getData(key: 'shipmentId');
 
-  runApp(LocalizedApp(child: MyApp()));
-}
+  final driverDataDB =  await DBHelper.getData('driver_data');
+  if(driverDataDB.isNotEmpty) {
+    userDataRef = UserModel.fromJson(driverDataDB.first);
+     if( userDataRef.shipmentId != null) CacheHelper.saveData(key: 'shipmentId', value: userDataRef.shipmentId);
+    shipmentId = userDataRef.shipmentId;
+  }
+    runApp(LocalizedApp(child: MyApp()));
+  }
 
 class MyApp extends StatefulWidget {
   @override
@@ -64,8 +77,12 @@ class _MyAppState extends State<MyApp> {
           debugShowCheckedModeBanner: false,
           title: 'Flutter Demo',
           theme: ThemeData(
+            highlightColor: Colors.white.withOpacity(0.25),
             primarySwatch: Colors.teal,
             visualDensity: VisualDensity.adaptivePlatformDensity,
+            floatingActionButtonTheme: FloatingActionButtonThemeData(
+              splashColor: Colors.white.withOpacity(0.25),
+            ),
           ),
           initialRoute: SplashWidget.routeName,
           // onGenerateRoute: gNavigationService.onGenerateRoute,

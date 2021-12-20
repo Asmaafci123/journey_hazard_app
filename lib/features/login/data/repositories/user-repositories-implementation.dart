@@ -8,6 +8,7 @@ import 'package:journeyhazard/core/errors/error_helper.dart';
 import 'package:journeyhazard/core/repositories/core_repository.dart';
 import 'package:journeyhazard/core/results/result.dart';
 import 'package:journeyhazard/core/models/empty_response_model.dart';
+import 'package:journeyhazard/core/services/local_storage/local_storage_service.dart';
 import 'package:journeyhazard/core/sqllite/sqlite_api.dart';
 import 'package:journeyhazard/features/login/data/models/user.dart';
 import 'package:journeyhazard/features/login/domain/repositories/user-repositories.dart';
@@ -60,6 +61,11 @@ class LoginRepositoryImplementation implements UserRepository {
       if (_data.flag) {
         final res = _data.data;
         DBHelper.update('driver_data', userModel.shipmentId, 'shipmentId');
+        CacheHelper.saveData(key: 'shipmentId',value: userModel.shipmentId).then((value)
+        {
+          shipmentId = userModel.shipmentId;
+        });
+
         TripsModel newData =  TripsModel.fromJson({"data":res});
         newData.data.forEach((element) {
 //          print(element.toJson());

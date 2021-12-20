@@ -82,14 +82,14 @@ class TripBloc extends Bloc<BaseTripEvent, BaseTripState> {
     await DBHelper.update('driver_data', null , 'shipmentId');
     yield TripStartState();
     }
-
     else if (event is SupportMobileEvent) {
       yield TripLoadingState();
       final res = await repo.mobileSupport();
       final driverDataDB =  await DBHelper.getData('driver_data');
       if(driverDataDB.isNotEmpty) userData=  UserModel.fromJson(driverDataDB.first);
         yield GetSupportNumberSuccessState(supportNumber: userData.supportNo);
-    } else if (event is ShowRiskInfoEvent) {
+    }
+    else if (event is ShowRiskInfoEvent) {
       showInfo = true;
       yield StartShowRiskInfoState(showInfo: true);
     }

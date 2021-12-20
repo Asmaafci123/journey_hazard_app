@@ -8,6 +8,7 @@ import 'package:journeyhazard/core/repositories/core_repository.dart';
 import 'package:journeyhazard/core/results/result.dart';
 import 'package:journeyhazard/core/models/empty_response_model.dart';
 import 'package:journeyhazard/core/services/http_service/http_service.dart';
+import 'package:journeyhazard/core/services/local_storage/local_storage_service.dart';
 import 'package:journeyhazard/core/sqllite/sqlite_api.dart';
 import 'package:journeyhazard/features/login/data/models/user.dart';
 import 'package:journeyhazard/features/trips/data/models/addRisk.dart';
@@ -48,6 +49,8 @@ class TripRepositoryImplementation implements TripRepository {
         final res = _data.data;
         DBHelper.update('driver_data', null , 'shipmentId');
         await DBHelper.deleteAll('cemex_risk');
+        CacheHelper.removeData(key: 'shipmentId');
+        shipmentId = null;
         TripsModel newData =  TripsModel.fromJson({"data":res});
         newData.data.forEach((element) {
           DBHelper.insert('cemex_risk', element.toJson());

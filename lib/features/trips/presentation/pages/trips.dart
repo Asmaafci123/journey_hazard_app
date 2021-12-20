@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
-import 'dart:io' show Platform;
+import 'dart:io' show Directory, Platform;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_animarker/core/ripple_marker.dart';
 import 'package:flutter_animarker/widgets/animarker.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:intl/date_symbol_data_file.dart';
+import 'package:intl/intl.dart';
 import 'package:journeyhazard/core/sqllite/sqlite_api.dart';
 import 'package:journeyhazard/features/login/data/models/user.dart';
 import 'package:journeyhazard/features/login/presentation/pages/login-page.dart';
@@ -25,6 +28,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:journeyhazard/features/trips/presentation/bloc/trip-events.dart';
 import 'package:journeyhazard/features/trips/presentation/bloc/trip-state.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+// import 'package:flutter_sound_lite/flutter_sound.dart';
+// import 'package:path_provider/path_provider.dart';
 
 
 class TripsWidget extends StatefulWidget {
@@ -40,24 +45,26 @@ class TripsWidgetState extends State<TripsWidget> {
   RiskBloc _blocRisk = RiskBloc();
   FlutterTts flutterTts;
 
-  LatLng _center = LatLng(27.167928, 31.196732);
+  LatLng _center = LatLng(0.5937, 0.9629);
   LatLng _currentRiskPosition =  LatLng(27.2134, 31.4456);
   MapType _currentMapType = MapType.normal;
   // Position currentLocation;
-  final double cameraZoom = 16;
+  final double cameraZoom = 15;
   final double cameraTilt = 80;
   final double cameraBearing = 30;
-  final double cameraZoomIn = 19;
+  final double cameraZoomIn = 15;
   CameraPosition initialCameraPosition;
 // the user's initial location and current location
 // as it moves
   Position currentLocation;
 // wrapper around the location API
-  Position location;
-
-  CameraPosition _cameraPosition;
+  Position lastLocation;
+  CameraPosition _cameraPosition= CameraPosition(
+      zoom: 15,
+      target: LatLng(0.5937, 0.9629) );
   bool addEnable = true;
   bool removeEnable = true;
+  String currentLang = translator.currentLanguage;
 
   // Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   // Set<Marker> markers = {};
@@ -72,12 +79,14 @@ class TripsWidgetState extends State<TripsWidget> {
   String googleAPiKey = MAP_API_KEY;
   List<RiskModel> allLocations = [];
   List<RiskModel> validRisks = [];
+  List<RiskModel> repeatRisks = [];
   List<RiskModel> runRisks = [];
   RiskModel currentTrip = new RiskModel();
+  RiskModel newRisk = new RiskModel();
 
   bool showInfo = false;
   BitmapDescriptor bitmapDescriptorRed;
-  // BitmapDescriptor bitmapDescriptorGreen;
+  BitmapDescriptor bitmapDescriptorGreen;
   BitmapDescriptor bitmapDescriptorBlue;
   UserModel userData;
 
@@ -92,14 +101,48 @@ class TripsWidgetState extends State<TripsWidget> {
 
   String resultText = "";
   bool isFirstTime = false;
-
+  Map<PolylineId, Polyline> polylines = {};
+  List<LatLng> polylineCoordinates = [];
+  PolylinePoints polylinePoints = PolylinePoints();
+  Set<Polyline> polyline = Set<Polyline>();
+  String filePath;
   @override
   void initState() {
     super.initState();
     setSourceAndDestinationIcons();
-    initializeTts();
     setInitialLocation();
-    showPinsOnMap();
+    initializeTts();
+    // startIt();
+    // positionStream = Geolocator.getPositionStream(distanceFilter: 100).listen((Position position) {
+    //       print("location in 500m: $position");
+    //       // points.clear();
+    //       if(position != null) {
+    //         if(currentLocation != null) {
+    //           lastLocation = currentLocation;
+    //           var lastPosition = LatLng(lastLocation.latitude, lastLocation.longitude);
+    //         }
+    //         currentLocation = position;
+    //         _center = LatLng(currentLocation?.latitude, currentLocation?.longitude);
+    //         // updatePinOnMap();
+    //         print('new location ${currentLocation?.latitude}, ${currentLocation?.longitude}');
+    //         var pinPosition = LatLng(currentLocation.latitude, currentLocation.longitude);
+    //
+    //         // polyline.add(truckCar);
+    //         // the trick is to remove the marker (by id)
+    //         // and add it again at the updated location
+    //         // markers.removeWhere((marker) => marker.markerId.value == "me");
+    //         // markers.add(Marker(
+    //         //     markerId: MarkerId('me'),
+    //         //     position: pinPosition, // updated position
+    //         //     icon: bitmapDescriptorBlue
+    //         // ));
+    //         // print(markers);
+    //       }
+    //       _bloc.add(GetTripEvent());
+    //     });
+    // _myRecorder.openAudioSession().then((value) {
+    //  print("value sound: $value");
+    // });
   }
 
   //Functions//
@@ -112,7 +155,6 @@ class TripsWidgetState extends State<TripsWidget> {
       zoom: cameraZoom,
       target: LatLng(currentLocation.latitude, currentLocation.longitude),
     );
-
     final GoogleMapController controller = await _controller.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(cPosition));
     // do this inside the setState() so Flutter gets notified
@@ -121,31 +163,27 @@ class TripsWidgetState extends State<TripsWidget> {
     var pinPosition = LatLng(currentLocation.latitude, currentLocation.longitude);
     // the trick is to remove the marker (by id)
     // and add it again at the updated location
-    markers.removeWhere((marker) => marker.markerId.value == "me");
-    markers.add(Marker(
-        markerId: MarkerId('me'),
-        position: pinPosition, // updated position
-        icon: bitmapDescriptorBlue
-    ));
+    // markers.removeWhere((marker) => marker.markerId.value == "me");
+    // markers.add(Marker(
+    //     markerId: MarkerId('me'),
+    //     position: pinPosition, // updated position
+    //     icon: bitmapDescriptorBlue
+    // ));
   }
 
   void _onMapCreated(GoogleMapController controller)  {
     _controller.complete(controller);
     positionStream = Geolocator.getPositionStream(distanceFilter: 500).listen(
             (Position position) {
+              print('position::$position');
           if(position != null) {
             currentLocation = position;
+            print('$currentLocation');
             _center = LatLng(currentLocation?.latitude, currentLocation?.longitude);
-            // updatePinOnMap();
+            //updatePinOnMap();
             var pinPosition = LatLng(currentLocation.latitude, currentLocation.longitude);
             // the trick is to remove the marker (by id)
             // and add it again at the updated location
-            markers.removeWhere((marker) => marker.markerId.value == "me");
-            markers.add(Marker(
-                markerId: MarkerId('me'),
-                position: pinPosition, // updated position
-                icon: bitmapDescriptorBlue
-            ));
           }
           _bloc.add(GetTripEvent());
         });
@@ -156,6 +194,7 @@ class TripsWidgetState extends State<TripsWidget> {
   //   if(driverDataDB.isNotEmpty) userData=  UserModel.fromJson(driverDataDB.first);
   // }
 //  Sound Init
+
   initializeTts() {
     flutterTts = FlutterTts();
     flutterTts.setStartHandler(() {
@@ -167,28 +206,44 @@ class TripsWidgetState extends State<TripsWidget> {
     });
 
     flutterTts.setCancelHandler(() {
-      //print("Cancel");
       ttsState = TtsState.stopped;
     });
     flutterTts.setErrorHandler((msg) {
-      //print("error: $msg");
       ttsState = TtsState.stopped;
     });
 
-    var lang = translator.currentLanguage == 'fil' ? 'fil-PH' : translator.currentLanguage;
-    //print(lang);
-    flutterTts.setLanguage(lang);
+
+    setTtsLanguage();
     flutterTts.setVolume(1);
-    flutterTts.setSpeechRate(1);
+    flutterTts.setSpeechRate(0.6);
     flutterTts.setPitch(1);
 
   }
 
+  void setTtsLanguage() async {
+    // flutterTts.getLanguages.then((value) => print(value));
+    var lang = currentLang == 'fil' ? "fil-PH": currentLang == 'en'? "en-US" : currentLang == 'hi'? "hi-IN" : currentLang == 'ur'? "ur-PK" :"ar";
+    print(lang);
+    flutterTts.setLanguage(lang);
+  }
 
   setSourceAndDestinationIcons() async {
     bitmapDescriptorRed =  await BitmapDescriptor.fromAssetImage(ImageConfiguration(devicePixelRatio: 2.0 ), 'assets/images/flag.png');
+    bitmapDescriptorGreen = await BitmapDescriptor.fromAssetImage(ImageConfiguration(devicePixelRatio: 2.0), 'assets/images/green-flag.png');
     bitmapDescriptorBlue = await BitmapDescriptor.fromAssetImage(ImageConfiguration(devicePixelRatio: 2.0), 'assets/images/truck.png');
+
   }
+
+  // createMarker(context) {
+  //   if (bitmapDescriptorBlue == null) {
+  //     ImageConfiguration configuration = createLocalImageConfiguration(context);
+  //     BitmapDescriptor.fromAssetImage(configuration, 'assets/images/truck.png').then((icon) {
+  //           setState(() {
+  //             bitmapDescriptorBlue = icon;
+  //           });
+  //        });
+  //   }
+  // }
 
   // Future getCurrentLocation() async {
   //   LocationPermission permission = await Geolocator.checkPermission();
@@ -203,46 +258,63 @@ class TripsWidgetState extends State<TripsWidget> {
   // }
 
   void setInitialLocation() async {
-    // set the initial location by pulling the user's
-    // current location from the location's getLocation()
-    currentLocation = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-  }
-
-  // getLocation() async {
-  //   Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-  //   //print(position.latitude);
-  //   //     //print('lat position${position?.latitude}, ${position?.longitude}');
-  //
-  //   setState(() {
-  //     _center = new LatLng(position.latitude, position.longitude);
-  //     _cameraPosition = CameraPosition(
-  //         zoom: cameraZoom,
-  //         tilt: cameraTilt,
-  //         bearing: cameraBearing,
-  //         target: _center);
-  //     currentLocation = position;
-  //     if(_controller != null)
-  //       _controller.future.then((value) => value.animateCamera(CameraUpdate.newCameraPosition(_cameraPosition)));
-  //
-  //     _bloc.add(GetTripEvent());
-  //   });
-  // }
-
-  getUserLocation() async {
-    currentLocation = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    currentLocation = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
     if(currentLocation != null) {
       _center = LatLng(currentLocation?.latitude, currentLocation?.longitude);
       _cameraPosition = CameraPosition(
           zoom: cameraZoom,
-          tilt: cameraTilt,
-          bearing: cameraBearing,
-          target: _center );
+          target: LatLng(currentLocation.latitude, currentLocation.longitude), );
+      CameraUpdate update =CameraUpdate.newCameraPosition(_cameraPosition);
+      // _mapController.moveCamera(update)
+      // _cameraPosition = CameraPosition(
+      //     zoom: cameraZoomIn,
+      //     target: _center );
       final GoogleMapController controller = await _controller.future;
-      controller.animateCamera(CameraUpdate.newCameraPosition(_cameraPosition));
+      controller.moveCamera(update);
     }
   }
 
-  addNewRisk() {
+  // getUserLocation() async {
+  //   currentLocation = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  //   if(currentLocation != null) {
+  //     _center = LatLng(currentLocation?.latitude, currentLocation?.longitude);
+  //     _cameraPosition = CameraPosition(
+  //         zoom: cameraZoom,
+  //         tilt: cameraTilt,
+  //         bearing: cameraBearing,
+  //         target: _center );
+  //     final GoogleMapController controller = await _controller.future;
+  //     controller.animateCamera(CameraUpdate.newCameraPosition(_cameraPosition));
+  //   }
+  // }
+  // Future<void> record() async {
+  //
+  //    Directory dir = Directory(filePath);
+  //   if (!dir.existsSync()) {
+  //     print("not exist");
+  //     Directory appDocDirectory = await getApplicationDocumentsDirectory();
+  //      dir  = await new Directory(appDocDirectory.path+'/'+'dir').create(recursive: true);
+  //   }
+  //
+  //   filePath = dir.path;
+  //   print('$filePath,$dir');
+  //   _myRecorder.openAudioSession();
+  //   await _myRecorder.startRecorder(
+  //     toFile: filePath,
+  //     codec: Codec.pcm16WAV,
+  //   );
+  //
+  //   _myRecorder.onProgress.listen((e) {
+  //     print("herrrr");
+  //     var date = DateTime.fromMillisecondsSinceEpoch(e.duration.inMilliseconds, isUtc: true);
+  //     var txt = DateFormat('mm:ss:SS', 'en_GB').format(date);
+  //       print('herrrrrrrrrrrrrrrrr::${txt.substring(0, 8)}');
+  //   });
+  //   // _recorderSubscription.cancel();
+  // }
+
+  addNewRisk(){
+    // await record();
     _bloc.add(AddHazarEvent());
   }
 
@@ -253,13 +325,14 @@ class TripsWidgetState extends State<TripsWidget> {
 
   completeShipment() {
     _bloc.add(CompleteTripEvent());
-
   }
 
   startShipment() {
     _bloc.add(StartTripEvent());
   }
+
   Future _speak(_newVoiceText) async {
+    print(_newVoiceText);
     if (_newVoiceText != null) {
       if (_newVoiceText.isNotEmpty) {
         for(int i = 0 ; i< 2 ;i++) {
@@ -270,20 +343,27 @@ class TripsWidgetState extends State<TripsWidget> {
     }
   }
 
-  void showPinsOnMap() {
-    // get a LatLng for the source location
-    // from the LocationData currentLocation object
-    if(currentLocation != null) {
-      var pinPosition = LatLng(currentLocation.latitude, currentLocation.longitude);
-      // add the initial source location pin
-      markers.add(Marker(
-        markerId: MarkerId('me'),
-        position: pinPosition,
-        icon: bitmapDescriptorBlue,
-      ));
+  String distanceText(distance) {
+    final di = (distance/1000).toString().substring(0,3);
+    var record= '';
+    if(currentLang == 'ar') {
+      record =" على بُعد $di كيلو متر";
     }
-
+    else if(currentLang == 'fil') {
+      record = "$di kilometers ang layo";
+    }
+    else if(currentLang == 'hi') {
+      record = " $di किमी दूर";
+    }
+    else if(currentLang == 'ur') {
+      record = " $di کلومیٹر دور ";
+    }
+    else {
+      record = " $di kilometers away";
+    }
+    return record;
   }
+
 
   show({String message, String title ,bool flag}) {
     AlertDialog alert = AlertDialog(
@@ -300,12 +380,11 @@ class TripsWidgetState extends State<TripsWidget> {
         return  alert;
       },);
   }
+
   moveCamera() async{
     _center = LatLng(currentLocation?.latitude, currentLocation?.longitude);
     _cameraPosition = CameraPosition(
-        zoom: cameraZoom,
-        tilt: cameraTilt,
-        bearing: cameraBearing,
+         zoom: cameraZoom,
         target: _center );
 
     final GoogleMapController controller = await _controller.future;
@@ -327,46 +406,125 @@ class TripsWidgetState extends State<TripsWidget> {
   }
 
   void runRisk(RiskModel risk) async{
-    // final GoogleMapController controller = await _controller.future;
-    // print(risk.toJson());
-    // controller.animateCamera(CameraUpdate.newLatLng(LatLng(double.parse(risk.lat), double.parse(risk.long))));
+
+    await _getPolyline(originLatitude: currentLocation?.latitude,originLongitude:  currentLocation?.longitude,
+        destLatitude: double.parse(risk.lat),destLongitude:  double.parse(risk.long),
+        riskID: risk.riskId.toString());
     _blocRisk.add(RunRiskEvent(risk: risk));
-
     removeEnable = true;
-    var riskText = (translator.currentLanguage == 'en')? risk.riskEn : risk.riskAr;
+    var riskText = (currentLang == 'en')? risk.riskEn : risk.riskAr;
     currentTrip = risk;
-
-    // showInfo = true;
+    var record= distanceText(risk.distance);
+    riskText = '$riskText $record';
     _speak(riskText);
     Future.delayed(const Duration(seconds: 20), () async {
-
       runRisks.removeWhere((elRisk) => elRisk.riskId == risk.riskId);
       markers.removeWhere((el) => el.markerId.value == risk.riskId.toString());
+      setInitialLocation();
+      var id = 'risk${risk.riskId}';
       markerRed = new RippleMarker(
-          markerId: MarkerId('risk'),
+          // visible: false,
+          markerId: MarkerId(id),
           position: LatLng(double.parse(risk.lat), double.parse(risk.long)),
           ripple: false,  //Ripple state
           infoWindow: InfoWindow(
               title: risk.riskAr,
               snippet: risk.riskAr
           ),
-          icon: bitmapDescriptorRed,
+          icon: bitmapDescriptorGreen,
           onTap: null,
           consumeTapEvents: true
       );
-      markersRed[MarkerId('risk')] = markerRed;
+      // final Marker marker = Marker(
+      //   markerId: MarkerId(id),
+      //   position: LatLng(double.parse(risk.lat), double.parse(risk.long)),
+      //   icon: bitmapDescriptorGreen,
+      //   consumeTapEvents: true,
+      //   onTap: null,
+      // );
+      markersRed[MarkerId(id)] = markerRed;
+      // final Marker marker = Marker(
+      //   markerId: MarkerId(risk.riskId.toString()),
+      //   position: LatLng(double.parse(risk.lat), double.parse(risk.long)),
+      //   icon: bitmapDescriptorGreen,
+      //   consumeTapEvents: true,
+      //   onTap: null,
+      // );
+      // markers.add(marker);
+      // markers.add(marker);
+      repeatRisks.add(risk);
+      polyline.removeWhere((element) => element.polylineId.value == risk.riskId.toString());
       _blocRisk.add(DoneRiskEvent(risk: risk));
     });
-
   }
 
   updateRiskData(RiskModel risk) async {
     await DBHelper.updateWhere(done: 0,distance: risk.distance,riskId:  risk.riskId);
   }
 
+  void runRepeatRisk(RiskModel risk) async{
+      await _getPolyline(originLatitude: currentLocation?.latitude,originLongitude:  currentLocation?.longitude,
+        destLatitude: double.parse(risk.lat),destLongitude:  double.parse(risk.long),
+        riskID: risk.riskId.toString());
+      _blocRisk.add(RunRepeatRiskEvent(risk: risk));
+    removeEnable = true;
+    var riskText = (currentLang == 'en')? risk.riskEn : risk.riskAr;
+      newRisk = risk;
+    var record= distanceText(risk.distance);
+    riskText = '$riskText $record';
+    _speak(riskText);
+    Future.delayed(const Duration(seconds: 20), () async {
+      repeatRisks.removeWhere((elRisk) => elRisk.riskId == risk.riskId);
+      setInitialLocation();
+
+      // var id = 'repeatRisk${risk.riskId}';
+      var id = 'risk${risk.riskId}';
+
+      markerRed = new RippleMarker(
+          markerId: MarkerId(id),
+          position: LatLng(double.parse(risk.lat), double.parse(risk.long)),
+          ripple: false,  //Ripple state
+          infoWindow: InfoWindow(
+              title: risk.riskAr,
+              snippet: risk.riskAr
+          ),
+          icon: bitmapDescriptorGreen,
+          onTap: null,
+          consumeTapEvents: true
+      );
+      markersRed[MarkerId(id)] = markerRed;
+      polyline.removeWhere((element) => element.polylineId.value == risk.riskId.toString());
+      _blocRisk.add(DoneRepeatRiskEvent());
+    });
+
+  }
+
+  repeatRisk() {
+    if(runRisks.length == 0)   {
+      repeatRisks.forEach((element) {
+        double distanceInMeters = Geolocator.distanceBetween(currentLocation?.latitude, currentLocation?.longitude,
+            double.parse(element.lat), double.parse(element.long));
+        // print('Distance for repeat ${element.riskId}::=> $distanceInMeters, Done ${element.done}');
+        element.distance = distanceInMeters;
+        repeatRisks.firstWhere((el) => el.riskId == element.riskId ).distance = distanceInMeters;
+        if(distanceInMeters > 3000) {
+          repeatRisks.removeWhere((el) => el.riskId == element.riskId);
+        }
+      });
+      print(repeatRisks);
+      currentRepeatRisk();
+    }
+  }
+
+  currentRepeatRisk() {
+    repeatRisks.sort((a,b)=> a.distance.compareTo(b.distance));
+    if(repeatRisks.length != 0) Future.delayed(const Duration(seconds: 5), () {
+      if(repeatRisks.isNotEmpty) runRepeatRisk(repeatRisks.first);
+    });
+  }
+
   calculateRisks() {
     // runRisks
-
     if(currentTrip.riskId == null && runRisks.isEmpty) {
       isFirstTime = true;
     }
@@ -376,6 +534,7 @@ class TripsWidgetState extends State<TripsWidget> {
       if(exitRisk != -1 && currentTrip.riskId != element.riskId) {
         runRisks[exitRisk] = element;
       }
+
       if(exitRisk == -1) {
         runRisks.add(element);
         final Marker marker = Marker(
@@ -385,7 +544,7 @@ class TripsWidgetState extends State<TripsWidget> {
           consumeTapEvents: true,
           onTap: null,
          );
-         markers.add(marker);
+        markers.add(marker);
       }
     });
     print(runRisks.toList());
@@ -396,27 +555,9 @@ class TripsWidgetState extends State<TripsWidget> {
 
   currentRisk() {
     runRisks.sort((a,b)=> a.distance.compareTo(b.distance));
-
-    if(runRisks.length != 0) Future.delayed(const Duration(seconds: 5), () {
-
+    if(runRisks.length != 0) Future.delayed(const Duration(seconds: 10), () {
       print(runRisks.first);
-      // var rippleMarker =  new RippleMarker(
-      //     markerId: MarkerId(runRisks.first.riskId.toString()),
-      //     position: LatLng(double.parse(runRisks.first.lat), double.parse(runRisks.first.long)),
-      //     ripple: true,  //Ripple state
-      //     infoWindow: InfoWindow(
-      //         title: runRisks.first.riskAr,
-      //         snippet: runRisks.first.riskAr
-      //     ),
-      //     icon: bitmapDescriptorRed,
-      //     onTap: null,
-      //     consumeTapEvents: true
-      // );
-      //
-      // markersRed[MarkerId(runRisks.first.riskId.toString())] = rippleMarker
-
       if(runRisks.isNotEmpty) runRisk(runRisks.first);
-
     });
   }
   //End Functions
@@ -426,22 +567,16 @@ class TripsWidgetState extends State<TripsWidget> {
     _bloc.close();
     positionStream.cancel();
     flutterTts.stop();
+    // _myRecorder.closeAudioSession();
+    // _myRecorder = null;
     super.dispose();
   }
-
 
   @override
   Widget  build(BuildContext context) {
     print("build Context");
     final arg = ModalRoute.of(context).settings.arguments as UserModel;
     if (arg != null) userData = arg;
-    //  initialCameraPosition = CameraPosition(
-    //     zoom: cameraZoom,
-    //     tilt: cameraTilt,
-    //     bearing: cameraBearing,
-    //     target: _center
-    // );
-
     return BlocProvider(
       create: (context) => _bloc,
       child: Scaffold(
@@ -456,22 +591,27 @@ class TripsWidgetState extends State<TripsWidget> {
                     final tripData = state.trips.data;
                     tripData.forEach((element) {
                       double distanceInMeters = Geolocator.distanceBetween(currentLocation?.latitude, currentLocation?.longitude, double.parse(element.lat), double.parse(element.long));
-                      print('Distance${element.riskId}:=>> $distanceInMeters, Done ${element.done}');
-
+                      // print('Distance${element.riskId}:=>> $distanceInMeters, Done ${element.done}');
                       element.distance = distanceInMeters;
-
                       if(distanceInMeters < 2500 && (element.done == 0 || element.done == null)  ) {
-                        print('Distance Lower${element.riskId}:=>> $distanceInMeters');
+                        // print('Distance Lower${element.riskId}:=>> $distanceInMeters');
                         validRisks.add(element);
                       }
-                      else if (distanceInMeters > 3000 && element.done == 1) {
+                      else if (distanceInMeters > 5000 && element.done == 1) {
                         updateRiskData(element);
                       }
                     });
                     calculateRisks();
-
-
-                    print (validRisks);
+                    print ("validRisks$validRisks");
+                    if(currentTrip.riskId == null && newRisk.riskId == null){
+                      setState(() {
+                        _cameraPosition = CameraPosition(
+                          zoom: cameraZoom,
+                          target: _center,
+                        );
+                        _controller.future.then((controller) => controller.animateCamera(CameraUpdate.newCameraPosition(_cameraPosition)));
+                      });
+                    }
                   }
                   if (state is TripLoadingState ) loadingAlertDialog(context);
                   if (state is TripStartState) {
@@ -505,21 +645,13 @@ class TripsWidgetState extends State<TripsWidget> {
               child: BlocConsumer<RiskBloc, RiskState>(
                 bloc: _blocRisk,
                 builder: (context, state) {
-                  if (state is RunRiskState) {
-                    // markersRed.add( new RippleMarker(
-                    //       markerId: MarkerId(state.risk.riskId.toString()),
-                    //       position: LatLng(double.parse(state.risk.lat), double.parse(state.risk.long)),
-                    //       ripple: true,  //Ripple state
-                    //       infoWindow: InfoWindow(
-                    //           title: state.risk.riskAr,
-                    //           snippet: state.risk.riskAr
-                    //       ),
-                    //       icon: bitmapDescriptorRed,
-                    //       onTap: null,
-                    //       consumeTapEvents: true
-                    //   ));
+                  print("rebuild");
+                  if (state is RunRiskState ) {
+                    print("RunRiskState");
+                    var id = 'risk${state.risk.riskId}';
                     markerRed = new RippleMarker(
-                        markerId: MarkerId('risk'),
+                      visible: true,
+                        markerId: MarkerId(id),
                         position: LatLng(double.parse(state.risk.lat), double.parse(state.risk.long)),
                         ripple: true,  //Ripple state
                         infoWindow: InfoWindow(
@@ -530,17 +662,50 @@ class TripsWidgetState extends State<TripsWidget> {
                         onTap: null,
                         consumeTapEvents: true
                     );
-                    markersRed[MarkerId('risk')] = markerRed;
-                    _center = LatLng(double.parse(state.risk.lat), double.parse(state.risk.long));
-                    _controller.future.then((controller) => controller.animateCamera(CameraUpdate.newLatLng( _center)));
+                    markersRed[MarkerId(id)] = markerRed;
+                    _cameraPosition = CameraPosition(
+                      zoom: cameraZoom,
+                      target: LatLng(double.parse(state.risk.lat), double.parse(state.risk.long)),
+                    );
+                    _controller.future.then((controller) => controller.animateCamera(CameraUpdate.newCameraPosition(_cameraPosition)));
+                  }
+                  else if ( state is RunRepeatRiskState) {
+                    print("RunRepeatRiskState");
+                    var id = 'risk${state.risk.riskId}';
+                    markerRed = new RippleMarker(
+                        visible: true,
+                        markerId: MarkerId(id),
+                        position: LatLng(double.parse(state.risk.lat), double.parse(state.risk.long)),
+                        ripple: true,  //Ripple state
+                        infoWindow: InfoWindow(
+                            title: state.risk.riskAr,
+                            snippet: state.risk.riskAr
+                        ),
+                        icon: bitmapDescriptorGreen,
+                        onTap: null,
+                        consumeTapEvents: true
+                    );
+                    markersRed[MarkerId(id)] = markerRed;
+                    // _center = LatLng(double.parse(state.risk.lat), double.parse(state.risk.long));
+                    _cameraPosition = CameraPosition(
+                      zoom: cameraZoom,
+                      target: LatLng(double.parse(state.risk.lat), double.parse(state.risk.long)),
+                    );
+                    _controller.future.then((controller) => controller.animateCamera(CameraUpdate.newCameraPosition(_cameraPosition)));
                   }
                   else {
-                    if (currentLocation != null) {
-                      _center = LatLng(currentLocation.latitude, currentLocation.longitude);
-                    _controller.future.then((controller) => controller.animateCamera(CameraUpdate.newLatLng(_center)));
+                    print('currentLocation');
+                    // if (currentLocation != null) {
+                    //   _center = LatLng(currentLocation.latitude, currentLocation.longitude);
+                    //   CameraPosition cPosition = CameraPosition(
+                    //     zoom: cameraZoom,
+                    //     // tilt: cameraTilt,
+                    //     // bearing: cameraBearing,
+                    //     target: _center,
+                    //   );
+                    //   _controller.future.then((controller) => controller.animateCamera(CameraUpdate.newCameraPosition(cPosition)));                    }
+
                   }
-                  }
-                  print('mmmmmmmmmmmmmmm ${context.watch<TripBloc>().userData?.toJson()}');
                   return Stack(
                       children: <Widget>[
                         Animarker(
@@ -549,16 +714,14 @@ class TripsWidgetState extends State<TripsWidget> {
                           rippleColor: Colors.red, // Color of fade ripple circle
                           rippleDuration: Duration(seconds: 20), //Pulse ripple duration
                           useRotation: false,
-                          markers:  markersRed.values.toSet(),
+                          shouldAnimateCamera: false,
+                          markers: markersRed.values.toSet(),
                           child: GoogleMap(
                             onMapCreated: _onMapCreated,
                             markers: markers.toSet(),
-                            initialCameraPosition:  CameraPosition(
-                              zoom: cameraZoom,
-                              tilt: cameraTilt,
-                              bearing: cameraBearing,
-                              target: _center,
-                            ),
+                            polylines: polyline.toSet(),
+                            buildingsEnabled: true,
+                            initialCameraPosition: _cameraPosition,
                             indoorViewEnabled: true,
                             trafficEnabled: true,
                             mapType: _currentMapType,
@@ -592,7 +755,7 @@ class TripsWidgetState extends State<TripsWidget> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [// TODO Check IT
-                                  (context.watch<TripBloc>().userData != null || userData != null)? (userData?.shipmentId != null) ? Expanded(child: Material(
+                                  (shipmentId != null) ? Expanded(child: Material(
                                           elevation: 5,
                                           borderRadius: BorderRadius.circular(4),
                                           color: Colors.green,
@@ -611,8 +774,7 @@ class TripsWidgetState extends State<TripsWidget> {
                                                   ),
                                                 ),
                                               ))
-                                      )) :
-                                  Expanded(child: Material(
+                                      )) : Expanded(child: Material(
                                       elevation: 5,
                                       borderRadius: BorderRadius.circular(4),
                                       color: Colors.orange,
@@ -631,27 +793,7 @@ class TripsWidgetState extends State<TripsWidget> {
                                               ),
                                             ),
                                           ))
-                                  ))
-                                      : Expanded(child: Material(
-                                          elevation: 5,
-                                          borderRadius: BorderRadius.circular(4),
-                                          color: Colors.grey,
-                                          child: InkWell(
-                                              borderRadius: BorderRadius.circular(4),
-                                              radius: 25,
-                                              onTap: null,
-                                              splashColor: Colors.grey.withOpacity(0.6),
-                                              highlightColor: Colors.grey.withOpacity(0.6),
-                                              child: Container(
-                                                child:
-                                                TextButton.icon(onPressed: startShipment,
-                                                  icon: Icon(Icons.refresh ,color: Colors.white,)
-                                                  ,label: Text(translator.translate('loading'),
-                                                    style: TextStyle(color: Colors.white, fontFamily: FONT_FAMILY,fontWeight: FontWeight.w400),
-                                                  ),
-                                                ),
-                                              ))
-                                      )),
+                                  )),
                                   SizedBox(width: 5,),
                                   Expanded(
                                     child: Material(
@@ -704,6 +846,24 @@ class TripsWidgetState extends State<TripsWidget> {
                             ),
                           ),
                         ),
+                        Container(
+                          margin: EdgeInsets.only(top: 160,right: 10,left:10),
+                          padding: EdgeInsets.all(5),
+                          height: 60,
+                          width:60,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.blue,
+                          ),
+                          child: Material(
+                            elevation: 6,
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.all(Radius.circular(50)),
+                            child:  IconButton(onPressed: repeatRisk,
+                                icon: Icon(Icons.refresh ,color: Colors.white, size:30)
+                            ),
+                          ),
+                        ),
                         if (state is RunRiskState) Align(
                           alignment:Alignment.bottomCenter,
                           child: Container(
@@ -722,29 +882,111 @@ class TripsWidgetState extends State<TripsWidget> {
                                   Row(
                                       mainAxisAlignment: MainAxisAlignment.start,
                                       children: [
-                                        Container(
-                                          height: 60.0,
-                                          width: 60.0,
-                                          child:  Material(
-                                              elevation: 6,
-                                              borderRadius: BorderRadius.all(Radius.circular(50)),
-                                              child: Icon(Icons.play_circle_outline,color:Colors.teal,size: 40,)),
-                                        ),
-                                        SizedBox(width: 6.0),
+                                        // Container(
+                                        //   height: 60.0,
+                                        //   width: 60.0,
+                                        //   child:  Material(
+                                        //       elevation: 6,
+                                        //       borderRadius: BorderRadius.all(Radius.circular(50)),
+                                        //       child: Icon(Icons.play_circle_outline,color:Colors.teal,size: 40,)),
+                                        // ),
+                                        // SizedBox(width: 6.0),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
-//                                mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Text(
-                                                (translator.currentLanguage == 'en')? state.risk.riskEn : state.risk.riskAr,
-                                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                                maxLines: 4,
-                                                overflow: TextOverflow.ellipsis,
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Text(
+                                                  (currentLang == 'en')? state.risk.riskEn : state.risk.riskAr,
+                                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                                  maxLines: 4,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
                                               ),
                                               SizedBox(height: 6.0),
                                               Text('${(state.risk.distance/1000).toString().substring(0,3)} Km',
-                                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
+                                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+
+                                            ],
+                                          ),),
+                                      ]),
+                                  OutlinedButton.icon(
+                                    onPressed:removeEnable ? removeRisk : null,
+                                    icon: Icon(Icons.delete,color: Colors.red,)
+                                    ,label: Text(translator.translate('removeHazar'),
+                                    style: TextStyle(color: Colors.red, fontFamily: FONT_FAMILY,fontWeight: FontWeight.w400),
+                                  ),
+                                    style: ButtonStyle(
+
+                                      shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0),
+                                        side: BorderSide(color: Colors.red,width:2),
+
+                                      )),
+                                      backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                                        if (states.contains(MaterialState.disabled)) {
+                                          return Colors.grey[200];
+                                        }
+                                        return Colors.white;
+                                      }),
+                                      overlayColor: MaterialStateProperty.resolveWith<Color>((states) {
+                                        if (states.contains(MaterialState.pressed)) {
+                                          return Colors.red;
+                                        }
+                                        return Colors.transparent;
+                                      }),
+
+                                    ),
+                                  ),
+                                ],
+                              )),
+                        ),
+                        if (state is RunRepeatRiskState) Align(
+                          alignment:Alignment.bottomCenter,
+                          child: Container(
+                              alignment:Alignment.bottomCenter,
+                              margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0,),
+                              padding: EdgeInsets.all(5),
+                              height: 150.0,
+                              width: MediaQuery.of(context).size.width -40,
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  boxShadow: [ BoxShadow( color: Colors.black54, offset: Offset(0.0, 4.0), blurRadius: 10.0,),]
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        // Container(
+                                        //   height: 60.0,
+                                        //   width: 60.0,
+                                        //   child:  Material(
+                                        //       elevation: 6,
+                                        //       borderRadius: BorderRadius.all(Radius.circular(50)),
+                                        //       child: Icon(Icons.play_circle_outline,color:Colors.teal,size: 40,)),
+                                        // ),
+                                        // SizedBox(width: 6.0),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Text(
+                                                  (currentLang == 'en')? state.risk.riskEn : state.risk.riskAr,
+                                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                                  maxLines: 4,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              SizedBox(height: 6.0),
+                                              Text('${(state.risk.distance/1000).toString().substring(0,3)} Km',
+                                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                               ),
@@ -785,322 +1027,57 @@ class TripsWidgetState extends State<TripsWidget> {
                         ]);
                   },
                   listener:  (context, state) {
-                    if (state is RiskLoadingState ) loadingAlertDialog(context);
+                    // if (state is RiskLoadingState ) loadingAlertDialog(context);
                     if (state is DoneRiskState) {
-                      Navigator.of(context).pop();
                       currentTrip = new RiskModel();
                       currentRisk();
                     }
-                    // if (state is RunRiskState) {
-                    //   var rippleMarker =  new RippleMarker(
-                    //       markerId: MarkerId(state.risk.riskId.toString()),
-                    //       position: LatLng(double.parse(state.risk.lat), double.parse(state.risk.long)),
-                    //       ripple: true,  //Ripple state
-                    //       infoWindow: InfoWindow(
-                    //           title: state.risk.riskAr,
-                    //           snippet: state.risk.riskAr
-                    //       ),
-                    //       icon: bitmapDescriptorRed,
-                    //       onTap: null,
-                    //       consumeTapEvents: true
-                    //   );
-                    //
-                    //   markersRed[MarkerId(state.risk.riskId.toString())] = rippleMarker;
-                    //   print(markersRed);
-                    // }
+                    if (state is DoneRepeatRiskState) {
+                      newRisk = new RiskModel();
+                      repeatRisk();
+                    }
                   }
               ),
-//               child:  Stack(
-//                 children: <Widget>[
-//                   Animarker(
-//                     mapId: _controller.future.then((value) => value.mapId), //Grab Google Map Id
-//                     rippleRadius: 0.5,  //[0,1.0] range, how big is the circle
-//                     rippleColor: Colors.red, // Color of fade ripple circle
-//                     rippleDuration: Duration(seconds: 20), //Pulse ripple duration
-//                     markers: Set<Marker>.of(markersRed.values),
-//                     child: GoogleMap(
-//                       onMapCreated: _onMapCreated,
-//                       markers: markers.toSet(),
-//                       initialCameraPosition:  CameraPosition(
-//                         zoom: cameraZoom,
-//                         tilt: cameraTilt,
-//                         bearing: cameraBearing,
-//                         target: _center,
-//                       ),
-//                       indoorViewEnabled: true,
-//                       trafficEnabled: true,
-//                       mapType: _currentMapType,
-//                       myLocationEnabled: true,
-//                       tiltGesturesEnabled: true,
-//                       compassEnabled: true,
-//                       rotateGesturesEnabled: true,
-//                       scrollGesturesEnabled: true,
-//                       zoomGesturesEnabled: true,
-//                       zoomControlsEnabled: true,
-//                       gestureRecognizers: Set()
-//                         ..add(Factory<PanGestureRecognizer>(() =>
-//                             PanGestureRecognizer()))..add(
-//                             Factory<ScaleGestureRecognizer>(() =>
-//                                 ScaleGestureRecognizer()))..add(
-//                             Factory<TapGestureRecognizer>(() =>
-//                                 TapGestureRecognizer()))..add(
-//                             Factory<VerticalDragGestureRecognizer>(() =>
-//                                 VerticalDragGestureRecognizer()))..add(
-//                             Factory<HorizontalDragGestureRecognizer>(() =>
-//                                 HorizontalDragGestureRecognizer())),
-//                     ),
-//                     // Other properties
-//                   ),
-//                   Container(
-//                     margin: EdgeInsets.only(top: 5),
-//                     padding: EdgeInsets.all(5),
-//                     height: 60,
-//                     alignment: AlignmentDirectional.topCenter,
-//                     child: Row(
-//                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                       mainAxisSize: MainAxisSize.min,
-//                       children: [// TODO Check IT
-//                         (userData != null)? (userData?.shipmentId != null) ? Expanded(
-//                             child: Material(
-//                                 elevation: 5,
-//                                 borderRadius: BorderRadius.circular(4),
-//                                 color: Colors.green,
-//                                 child: InkWell(
-//                                     borderRadius: BorderRadius.circular(4),
-//                                     radius: 25,
-//                                     onTap: startShipment,
-//                                     splashColor: Colors.lightGreen.withOpacity(0.6),
-//                                     highlightColor: Colors.lightGreen.withOpacity(0.6),
-//                                     child: Container(
-//                                       child:
-//                                       TextButton.icon(onPressed: completeShipment,
-//                                         icon: Icon(Icons.done_all,color: Colors.white,)
-//                                         ,label: Text(translator.translate('endTrip'),
-//                                           style: TextStyle(color: Colors.white, fontFamily: FONT_FAMILY,fontWeight: FontWeight.w400),
-//                                         ),
-//                                       ),
-//                                     ))
-//                             )
-//                         ) :
-//                         Expanded(child: Material(
-//                             elevation: 5,
-//                             borderRadius: BorderRadius.circular(4),
-//                             color: Colors.orange,
-//                             child: InkWell(
-//                                 borderRadius: BorderRadius.circular(4),
-//                                 radius: 25,
-//                                 onTap: startShipment,
-//                                 splashColor: Colors.deepOrange.withOpacity(0.6),
-//                                 highlightColor: Colors.deepOrange.withOpacity(0.6),
-//                                 child: Container(
-//                                   child:
-//                                   TextButton.icon(onPressed: startShipment,
-//                                     icon: Icon(Icons.local_shipping,color: Colors.white,)
-//                                     ,label: Text(translator.translate('startTrip'),
-//                                       style: TextStyle(color: Colors.white, fontFamily: FONT_FAMILY,fontWeight: FontWeight.w400),
-//                                     ),
-//                                   ),
-//                                 ))
-//                         )) : Expanded(
-//                             child: Material(
-//                                 elevation: 5,
-//                                 borderRadius: BorderRadius.circular(4),
-//                                 color: Colors.grey,
-//                                 child: InkWell(
-//                                     borderRadius: BorderRadius.circular(4),
-//                                     radius: 25,
-//                                     onTap: null,
-//                                     splashColor: Colors.grey.withOpacity(0.6),
-//                                     highlightColor: Colors.grey.withOpacity(0.6),
-//                                     child: Container(
-//                                       child:
-//                                       TextButton.icon(onPressed: startShipment,
-//                                         icon: Icon(Icons.refresh ,color: Colors.white,)
-//                                         ,label: Text(translator.translate('loading'),
-//                                           style: TextStyle(color: Colors.white, fontFamily: FONT_FAMILY,fontWeight: FontWeight.w400),
-//                                         ),
-//                                       ),
-//                                     ))
-//                             )
-//                         ),
-//                         SizedBox(width: 5,),
-//                         Expanded(
-//                           child: Material(
-//                               borderRadius: BorderRadius.circular(4),
-//                               elevation: 5,
-//                               color: Colors.red,
-//                               child: TextButton.icon(onPressed: addNewRisk,
-//                                 icon: Icon(Icons.add_circle_outline,color: Colors.white,)
-//                                 ,label: Text(translator.translate('addHazar'),
-//                                   style: TextStyle( color: Colors.white, fontFamily: FONT_FAMILY,fontWeight: FontWeight.w400),
-//                                   maxLines: 3,
-//                                   overflow: TextOverflow.ellipsis,
-//                                 ),
-//                                 style:  ButtonStyle(
-//                                   backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-//                                     if (states.contains(MaterialState.disabled)) {
-//                                       return Colors.grey[200];
-//                                     }
-//                                     return Colors.red;
-//                                   }),
-//                                   overlayColor: MaterialStateProperty.resolveWith<Color>((states) {
-//                                     if (states.contains(MaterialState.pressed)) {
-//                                       return Colors.redAccent;
-//                                     }
-//                                     return Colors.transparent;
-//                                   }),
-//
-//                                 ),
-//                               )
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                   Container(
-//                     margin: EdgeInsets.only(top: 80,right: 10,left:10),
-//                     padding: EdgeInsets.all(5),
-//                     height: 60,
-//                     width:60,
-//                     decoration: BoxDecoration(
-//                       shape: BoxShape.circle,
-//                       color: Colors.teal,
-//                     ),
-//                     child: Material(
-//                       elevation: 6,
-//                       color: Colors.teal,
-//                       borderRadius: BorderRadius.all(Radius.circular(50)),
-//                       child:  IconButton(onPressed: _launchCaller,
-//                           icon: Icon(Icons.call,color: Colors.white, size:30)
-//                       ),
-//                     ),
-//                   ),
-//                   BlocConsumer<RiskBloc, RiskState>(
-//                     bloc: _blocRisk,
-//                       builder: (context, state) {
-//                        if (state is RunRiskState) {
-//                           _controller.future.then((controller) => controller.animateCamera(CameraUpdate.newLatLng(LatLng(double.parse(state.risk.lat), double.parse(state.risk.long)))));
-//                          return Align(
-//                            alignment:Alignment.bottomCenter,
-//                            child: Container(
-//                                alignment:Alignment.bottomCenter,
-//                                margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0,),
-//                                padding: EdgeInsets.all(10),
-//                                height: 150.0,
-//                                width: MediaQuery.of(context).size.width -40,
-//                                decoration: BoxDecoration(
-//                                    color: Colors.white,
-//                                    borderRadius: BorderRadius.circular(10.0),
-//                                    boxShadow: [ BoxShadow( color: Colors.black54, offset: Offset(0.0, 4.0), blurRadius: 10.0,),]
-//                                ),
-//                                child: Column(
-//                                  children: [
-//                                    Row(
-//                                        mainAxisAlignment: MainAxisAlignment.start,
-//                                        children: [
-//                                          Container(
-//                                            height: 60.0,
-//                                            width: 60.0,
-//                                            child:  Material(
-//                                                elevation: 6,
-//                                                borderRadius: BorderRadius.all(Radius.circular(50)),
-//                                                child: Icon(Icons.play_circle_outline,color:Colors.teal,size: 40,)),
-//                                          ),
-//                                          SizedBox(width: 10.0),
-//                                          Expanded(
-//                                            child: Column(
-//                                              crossAxisAlignment: CrossAxisAlignment.start,
-// //                                mainAxisSize: MainAxisSize.min,
-//                                              children: [
-//                                                Text(
-//                                                  (translator.currentLanguage == 'en')? state.risk.riskEn : state.risk.riskAr,
-//                                                  style: TextStyle(
-//                                                      fontSize: 14,
-//                                                      fontWeight: FontWeight.bold),
-//                                                  maxLines: 4,
-//                                                ),
-//                                              ],
-//                                            ),),
-//                                        ]),
-//                                    OutlinedButton.icon(
-//                                      onPressed:removeEnable ? removeRisk : null,
-//                                      icon: Icon(Icons.delete,color: Colors.red,)
-//                                      ,label: Text(translator.translate('removeHazar'),
-//                                      style: TextStyle(color: Colors.red, fontFamily: FONT_FAMILY,fontWeight: FontWeight.w400),
-//                                    ),
-//                                      style: ButtonStyle(
-//
-//                                        shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0),
-//                                          side: BorderSide(color: Colors.red,width:2),
-//
-//                                        )),
-//                                        backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-//                                          if (states.contains(MaterialState.disabled)) {
-//                                            return Colors.grey[200];
-//                                          }
-//                                          return Colors.white;
-//                                        }),
-//                                        overlayColor: MaterialStateProperty.resolveWith<Color>((states) {
-//                                          if (states.contains(MaterialState.pressed)) {
-//                                            return Colors.red;
-//                                          }
-//                                          return Colors.transparent;
-//                                        }),
-//
-//                                      ),
-//                                    ),
-//                                  ],
-//                                )),
-//                          );
-//
-//                        } else
-//                          {
-//                            return Container();
-//                          }
-//                       },
-//                     listener:  (context, state) {
-//                       if (state is RiskLoadingState ) loadingAlertDialog(context);
-//
-//                       if (state is DoneRiskState) {
-//                         Navigator.of(context).pop();
-//                         currentTrip = new RiskModel();
-//                         currentRisk();
-//                       }
-//                       if (state is RunRiskState) {
-//                         var rippleMarker =  new RippleMarker(
-//                             markerId: MarkerId(state.risk.riskId.toString()),
-//                             position: LatLng(double.parse(state.risk.lat), double.parse(state.risk.long)),
-//                             ripple: true,  //Ripple state
-//                             infoWindow: InfoWindow(
-//                                 title: state.risk.riskAr,
-//                                 snippet: state.risk.riskAr
-//                             ),
-//                             icon: bitmapDescriptorRed,
-//                             onTap: null,
-//                             consumeTapEvents: true
-//                         );
-//
-//                         markersRed[MarkerId(state.risk.riskId.toString())] = rippleMarker;
-//                         print(markersRed);
-//                       }
-//
-//
-//
-//                     }
-//                   )
-//                 ],
-//               ),
             ),
-
-
-
           ),
         ),
+        floatingActionButton: FloatingActionButton(
+          highlightElevation: 20,
+          tooltip: 'Current Location',
+          elevation: 10,
+          onPressed: setInitialLocation,
+          child:Icon(Icons.gps_fixed ,color: Colors.white, size:25)),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
 
   }
 
+  _addPolyLine(riskID) {
+    PolylineId id = PolylineId(riskID);
+    Polyline newPolyline = Polyline(polylineId: id, color: Colors.orange,width: 4, points: polylineCoordinates);
+    polylines[id] = newPolyline;
+    print(polylines);
+    Polyline currentRisk = polylines[PolylineId(riskID)];
+    polyline.add(currentRisk);
+  }
+
+  _getPolyline({originLatitude, originLongitude,destLatitude, destLongitude ,riskID}) async {
+    polylineCoordinates.clear();
+    try {
+      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        googleAPiKey, PointLatLng(originLatitude, originLongitude),
+        PointLatLng(destLatitude, destLongitude),
+        travelMode: TravelMode.driving,);
+      if (result.points.isNotEmpty) {
+        result.points.forEach((PointLatLng point) {
+          polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+        });
+      }
+      _addPolyLine(riskID);
+    } catch(e){
+
+    }
+  }
 
 }
-

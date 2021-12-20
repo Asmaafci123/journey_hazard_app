@@ -20,3 +20,15 @@ class DoneRiskEvent extends RiskEvent{
   List<Object> get props => [risk];
 }
 
+class RunRepeatRiskEvent extends RiskEvent{
+  final RiskModel risk;
+  RunRepeatRiskEvent({this.risk});
+
+  @override
+  List<Object> get props => [risk];
+}
+class DoneRepeatRiskEvent extends RiskEvent{
+  DoneRepeatRiskEvent();
+  @override
+  List<Object> get props => [];
+}

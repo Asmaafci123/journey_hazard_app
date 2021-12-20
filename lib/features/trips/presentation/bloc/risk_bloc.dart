@@ -22,7 +22,7 @@ class RiskBloc extends Bloc<RiskEvent, RiskState> {
 
     // TODO: implement mapEventToState
    if(event is DoneRiskEvent) {
-    yield RiskLoadingState();
+    // yield RiskLoadingState();
     final res = await repo.doneHazarData(event.risk);
     // ToDo Update Done Colunm In DB
     yield DoneRiskState();
@@ -30,8 +30,10 @@ class RiskBloc extends Bloc<RiskEvent, RiskState> {
      // ToDo Update Done Colunm In DB
      await DBHelper.updateWhere(done: 1,distance: event.risk.distance,riskId:event.risk.riskId);
      yield RunRiskState(risk: event.risk);
+   } else if (event is RunRepeatRiskEvent ) {
+     yield RunRepeatRiskState(risk: event.risk);
+   } else  if(event is DoneRepeatRiskEvent) {
+     yield DoneRepeatRiskState();
    }
-
-
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:journeyhazard/core/screen_utils/screen_utils.dart';
+import 'package:journeyhazard/features/login/data/models/user.dart';
 
 const String TAG = 'azhar >>>>>>';
 const APP_NAME = 'journeyhazard';
@@ -50,3 +51,7 @@ const int CODE_LENGTH = 5;
  const String _kFontPkg = null;
 
  const IconData whatsapp = IconData(0xf232, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+
+
+ String shipmentId = '';
+ UserModel userDataRef;
