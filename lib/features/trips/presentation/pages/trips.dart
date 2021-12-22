@@ -3,11 +3,13 @@ import 'dart:math';
 import 'dart:ui';
 import 'dart:io' show Directory, Platform;
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animarker/core/ripple_marker.dart';
 import 'package:flutter_animarker/widgets/animarker.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:intl/date_symbol_data_file.dart';
 import 'package:intl/intl.dart';
+import 'package:journeyhazard/core/eventsTypes.dart';
 import 'package:journeyhazard/core/sqllite/sqlite_api.dart';
 import 'package:journeyhazard/features/login/data/models/user.dart';
 import 'package:journeyhazard/features/login/presentation/pages/login-page.dart';
@@ -106,12 +108,42 @@ class TripsWidgetState extends State<TripsWidget> {
   PolylinePoints polylinePoints = PolylinePoints();
   Set<Polyline> polyline = Set<Polyline>();
   String filePath;
+  static const eventChannel = EventChannel('com.cemex.hazar/gamepad_channel');
+  StreamSubscription _eventChannel;
+  int index = 0;
   @override
   void initState() {
-    super.initState();
     setSourceAndDestinationIcons();
     setInitialLocation();
     initializeTts();
+    _eventChannel = eventChannel.receiveBroadcastStream().listen((event) {
+      print('eventChannel ::$event');
+      final eventParameters = <String, dynamic>{};
+
+      if (event != null && event is String) {
+        event.split(',~').forEach((e) {
+          var createPairList = e.split('=');
+          eventParameters[createPairList[0]] = createPairList[1];
+        });
+      }
+
+      if (eventParameters[EventTypes.androidType] == EventTypes.button) {
+        print('BUTTON: ${eventParameters['keyCode']}');
+        if(index== 0){
+          addNewRisk();
+          index++;
+        } else {
+          index = 0;
+        }
+
+      } else if (eventParameters[EventTypes.androidType] == EventTypes.axis) {
+        print('AXIS: $eventParameters');
+      } else if (eventParameters[EventTypes.androidType] == EventTypes.dpad) {
+        print('DPAD: $eventParameters');
+      }
+    });
+    super.initState();
+
     // startIt();
     // positionStream = Geolocator.getPositionStream(distanceFilter: 100).listen((Position position) {
     //       print("location in 500m: $position");
@@ -234,28 +266,6 @@ class TripsWidgetState extends State<TripsWidget> {
 
   }
 
-  // createMarker(context) {
-  //   if (bitmapDescriptorBlue == null) {
-  //     ImageConfiguration configuration = createLocalImageConfiguration(context);
-  //     BitmapDescriptor.fromAssetImage(configuration, 'assets/images/truck.png').then((icon) {
-  //           setState(() {
-  //             bitmapDescriptorBlue = icon;
-  //           });
-  //        });
-  //   }
-  // }
-
-  // Future getCurrentLocation() async {
-  //   LocationPermission permission = await Geolocator.checkPermission();
-  //   //print(permission);
-  //   if (permission != PermissionStatus.granted) {
-  //     LocationPermission permission = await Geolocator.requestPermission();
-  //     if (permission != PermissionStatus.granted)
-  //       getLocation();
-  //     return;
-  //   }
-  //   getLocation();
-  // }
 
   void setInitialLocation() async {
     currentLocation = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
@@ -270,48 +280,10 @@ class TripsWidgetState extends State<TripsWidget> {
       //     zoom: cameraZoomIn,
       //     target: _center );
       final GoogleMapController controller = await _controller.future;
-      controller.moveCamera(update);
+      controller.animateCamera(update);
     }
   }
 
-  // getUserLocation() async {
-  //   currentLocation = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-  //   if(currentLocation != null) {
-  //     _center = LatLng(currentLocation?.latitude, currentLocation?.longitude);
-  //     _cameraPosition = CameraPosition(
-  //         zoom: cameraZoom,
-  //         tilt: cameraTilt,
-  //         bearing: cameraBearing,
-  //         target: _center );
-  //     final GoogleMapController controller = await _controller.future;
-  //     controller.animateCamera(CameraUpdate.newCameraPosition(_cameraPosition));
-  //   }
-  // }
-  // Future<void> record() async {
-  //
-  //    Directory dir = Directory(filePath);
-  //   if (!dir.existsSync()) {
-  //     print("not exist");
-  //     Directory appDocDirectory = await getApplicationDocumentsDirectory();
-  //      dir  = await new Directory(appDocDirectory.path+'/'+'dir').create(recursive: true);
-  //   }
-  //
-  //   filePath = dir.path;
-  //   print('$filePath,$dir');
-  //   _myRecorder.openAudioSession();
-  //   await _myRecorder.startRecorder(
-  //     toFile: filePath,
-  //     codec: Codec.pcm16WAV,
-  //   );
-  //
-  //   _myRecorder.onProgress.listen((e) {
-  //     print("herrrr");
-  //     var date = DateTime.fromMillisecondsSinceEpoch(e.duration.inMilliseconds, isUtc: true);
-  //     var txt = DateFormat('mm:ss:SS', 'en_GB').format(date);
-  //       print('herrrrrrrrrrrrrrrrr::${txt.substring(0, 8)}');
-  //   });
-  //   // _recorderSubscription.cancel();
-  // }
 
   addNewRisk(){
     // await record();
@@ -374,7 +346,7 @@ class TripsWidgetState extends State<TripsWidget> {
     );
     showDialog( context: context,
       builder: (BuildContext context) {
-        Future.delayed(Duration(seconds: 3),(){
+        Future.delayed(Duration(seconds: 2),(){
           Navigator.of(context).pop();
         });
         return  alert;
