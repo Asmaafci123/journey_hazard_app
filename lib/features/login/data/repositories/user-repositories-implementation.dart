@@ -50,6 +50,7 @@ class LoginRepositoryImplementation implements UserRepository {
       "Shipment_ID" :  userModel.shipmentId.toString(),
       "MobileNumber" : userMobileData.mobile.toString(),
       "country" : userMobileData.country,
+      "Company": userMobileData.company,
     };
     print(userData);
     // TODO: implement LoginUser

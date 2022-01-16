@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:journeyhazard/core/errors/base_error.dart';
 import 'package:journeyhazard/features/login/data/models/user.dart';
+import 'package:journeyhazard/features/trips/data/models/jobsitelist.dart';
 import 'package:journeyhazard/features/trips/data/models/trips.dart';
 
 class BaseTripState {
@@ -41,4 +42,9 @@ class GetSupportNumberSuccessState extends BaseTripState {
 class StartShowRiskInfoState extends BaseTripState {
   final bool showInfo;
   StartShowRiskInfoState({this.showInfo});
+}
+
+class GetJobSiteRisksSuccessState  extends BaseTripState {
+  JobSiteList jobSiteList;
+  GetJobSiteRisksSuccessState({this.jobSiteList});
 }

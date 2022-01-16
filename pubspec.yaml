@@ -68,6 +68,12 @@ dependencies:
   intl_phone_number_input: ^0.7.0+2
   wakelock: ^0.5.1
   flutter_polyline_points: ^1.0.0
+  sliding_sheet: ^0.5.2
+  carousel_slider: ^4.0.0
+  dropdown_search: ^2.0.1
+
+#  flutter_speed_dial: ^4.3.0
+
 #  flutter_sound_lite: ^8.4.1
 #  flutter_ffmpeg: ^0.4.2
 

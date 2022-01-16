@@ -21,6 +21,7 @@ class RiskAddModel {
     this.mobileNumber,
     this.shipmentId,
     this.country,
+    this.company,
   });
 
   int riskId;
@@ -34,6 +35,7 @@ class RiskAddModel {
   String mobileNumber;
   String shipmentId;
   String country;
+  String company;
 
 
   RiskAddModel copyWith({
@@ -48,6 +50,7 @@ class RiskAddModel {
     String mobileNumber,
     String shipmentId,
     String country,
+    String company,
   }) =>
       RiskAddModel(
         riskId: riskId ?? this.riskId,
@@ -61,6 +64,7 @@ class RiskAddModel {
         mobileNumber: mobileNumber ?? this.mobileNumber,
         shipmentId: shipmentId ?? this.shipmentId,
           country: country?? this.country,
+          company: company?? this.company,
 
       );
 
@@ -76,6 +80,7 @@ class RiskAddModel {
     mobileNumber: json["mobileNumber"] == null ? null : json["mobileNumber"],
     shipmentId: json["shipment_ID"] == null ? null : json["shipment_ID"],
     country: json["country"] == null ? null : json["country"],
+     company: json["company"] == null ? null :json["company"]
 
   );
 
@@ -91,6 +96,7 @@ class RiskAddModel {
     "mobileNumber": mobileNumber == null ? null : mobileNumber,
     "shipment_ID": shipmentId == null ? null : shipmentId,
     "country": country == null ? null : country,
+    "company": company == null? null :company,
   };
 
   Map<String, dynamic> toSqlJson() => {
@@ -101,6 +107,7 @@ class RiskAddModel {
     "mobileNumber": mobileNumber == null ? null : mobileNumber,
     "shipment_ID": shipmentId == null ? null : shipmentId,
     "country": country == null ? null : country,
+    "company": company == null ? null :company,
 
   };
   Map<String, dynamic> toSendJson() => {
@@ -110,6 +117,7 @@ class RiskAddModel {
     "MobileNumber": mobileNumber == null ? null : mobileNumber,
     "Shipment_ID": shipmentId == null ? null : shipmentId,
     "country": country == null ? null : country,
+    "company": company == null ? null :company,
 
   };
 }

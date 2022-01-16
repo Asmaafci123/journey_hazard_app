@@ -12,6 +12,8 @@ import 'package:journeyhazard/core/services/local_storage/local_storage_service.
 import 'package:journeyhazard/core/sqllite/sqlite_api.dart';
 import 'package:journeyhazard/features/login/data/models/user.dart';
 import 'package:journeyhazard/features/trips/data/models/addRisk.dart';
+import 'package:journeyhazard/features/trips/data/models/jobsite.dart';
+import 'package:journeyhazard/features/trips/data/models/jobsitelist.dart';
 import 'package:journeyhazard/features/trips/data/models/risk.dart';
 import 'package:journeyhazard/features/trips/data/models/trips.dart';
 import 'package:journeyhazard/features/trips/domain/repositories/trip-repositories.dart';
@@ -39,6 +41,7 @@ class TripRepositoryImplementation implements TripRepository {
       "Shipment_ID" :  userData.shipmentId,
       "MobileNumber" : userData.mobile,
       "country": userData.country,
+      "Company": userData.company,
     };
 
     final response = await CoreRepository.request(url: completeShipmentUrl, method: HttpMethod.POST, converter: null, data: newRisk);
@@ -86,10 +89,11 @@ class TripRepositoryImplementation implements TripRepository {
         long: newPosition.longitude.toString(),
         mobileNumber: userData.mobile,
         shipmentId: userData.shipmentId,
-        country: userData.country
+        country: userData.country,
+      company: userData.company,
     );
 
-//    print(driverDataDB);
+   print(newRisk.toSendJson());
 
 
 //    List list = List();
@@ -146,7 +150,8 @@ class TripRepositoryImplementation implements TripRepository {
         long: risk.long,
         mobileNumber: userData.mobile,
         shipmentId: userData.shipmentId,
-        country: userData.country
+        country: userData.country,
+        company: userData.company
     );
 
 //    print(newRisk.toSqlJson());
@@ -201,7 +206,8 @@ class TripRepositoryImplementation implements TripRepository {
       long: risk.long,
       mobileNumber: userData.mobile,
       shipmentId: userData.shipmentId,
-      country: userData.country
+      country: userData.country,
+      company: userData.company,
     );
 
     final response = await CoreRepository.request(url: addHazard,
@@ -249,6 +255,7 @@ class TripRepositoryImplementation implements TripRepository {
       "Shipment_ID" :  userData.shipmentId,
       "MobileNumber" : userData.mobile,
       "country": userData.country,
+      "Company": userData.company,
     };
 //    print(data);
     // TODO: implement  ForgotPassword
@@ -272,4 +279,89 @@ class TripRepositoryImplementation implements TripRepository {
     }
   }
 
+  @override
+  Future<Result<dynamic>> getJobSiteRisks(Position position,  UserModel driverData) async{
+
+    var userData = {
+      "Risk_ID": 0,
+      "Risk_AR": "2344",
+      "Risk_EN": "complete",
+      "Lat": position.latitude.toString(),
+      "Long": position.longitude.toString(),
+      "Comment": "01-02-3009",
+      "Active": "false",
+      "Shipment_ID" :  "0",
+      "MobileNumber" : driverData.mobile.toString(),
+      "Country": driverData.country,
+      "Company": driverData.company
+    };
+   print(userData);
+    // TODO: implement LoginUser
+    final response = await CoreRepository.request(url: JobSiteRiskUrl, method: HttpMethod.POST, converter: null, data:userData);
+    if (response.hasDataOnly) {
+     print(response.data);
+      final res = response.data;
+      print("response:${response.data}");
+      final _data = RemoteResultModel.fromJson(res);
+      if (_data.flag) {
+        final res = _data.data;
+        JobSiteList newData=  JobSiteList.fromJson({"data":res});
+        return Result(data: newData);
+      } else {
+        final msg = _data.message;
+        return Result(error: CustomError(message: msg));
+      }
+    }
+    if (response.hasErrorOnly) {
+      if(response.error is BadRequestError) {
+        BadRequestError error=  response.error ;
+        return Result(error: CustomError(message:error.message));
+      }
+      return Result(error: CustomError(message:response.error.toString()));
+    }
+  }
+
+
+  @override
+  Future<Result<dynamic>> getRisksByJobSite(Position position, UserModel driverData, JobSite jobSite) async{
+
+    var userData = {
+      "Risk_ID": 0,
+      "Risk_AR": "2344",
+      "Risk_EN": "complete",
+      "Lat": position.latitude.toString(),
+      "Long": position.longitude.toString(),
+      "Comment": "01-02-3009",
+      "Active": "false",
+      "Shipment_ID" :  "0",
+      "MobileNumber" : driverData.mobile.toString(),
+      "Country": driverData.country,
+      "Company": driverData.company,
+      "JobSite": jobSite.jobsiteId
+    };
+    print(userData);
+    // TODO: implement LoginUser
+    final response = await CoreRepository.request(url: JobSiteRiskListUrl, method: HttpMethod.POST, converter: null, data:userData);
+    if (response.hasDataOnly) {
+      print(response.data);
+      final res = response.data;
+      print("response:${response.data}");
+      final _data = RemoteResultModel.fromJson(res);
+      if (_data.flag) {
+        final res = _data.data;
+        JobSiteList newData =  JobSiteList.fromJson({"data":res});
+        return Result(data: newData);
+      } else {
+        final msg = _data.message;
+        return Result(error: CustomError(message: msg));
+      }
+    }
+    if (response.hasErrorOnly) {
+      if(response.error is BadRequestError) {
+        BadRequestError error=  response.error ;
+        return Result(error: CustomError(message:error.message));
+      }
+      return Result(error: CustomError(message:response.error.toString()));
+    }
+  }
 }

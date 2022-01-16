@@ -15,6 +15,7 @@ class  SendMobileFailedState extends BaseSendMobileState {
    SendMobileFailedState(this.error);
 }
 
+class  ChangeMobileSuccessState extends BaseSendMobileState {}
 
 class GetCountriesSuccessState extends BaseSendMobileState {
 

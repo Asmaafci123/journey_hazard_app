@@ -10,3 +10,5 @@ class  SendMobileEvent extends BaseMobileEvent {
   final UserModel userModel;
   SendMobileEvent({this.userModel});
 }
+
+class ChangeMobileEvent extends BaseMobileEvent{}

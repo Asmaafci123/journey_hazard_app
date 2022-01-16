@@ -44,6 +44,7 @@ class SplashRepositoryImplementation {
       "Shipment_ID" :  '0',
       "MobileNumber" : userMobileData.mobile.toString(),
       "Country": userMobileData.country,
+      "Company": userMobileData.company,
     };
 //    print(userData);
     // TODO: implement LoginUser

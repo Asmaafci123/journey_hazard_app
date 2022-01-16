@@ -68,6 +68,9 @@
   "errorTitle": "Error",
   "successTitle": "Tagumpay",
   "ok": "ayos",
-  "loading": "Loading ..."
+  "loading": "Loading ...",
+  "selectJobSite":"Pumili ng lokasyon",
+  "jobSites": "mga site",
+  "company": "kumpanya"
 
 }

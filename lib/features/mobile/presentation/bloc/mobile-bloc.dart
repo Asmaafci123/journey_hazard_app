@@ -25,14 +25,17 @@ class SendMobileBloc extends Bloc<BaseMobileEvent, BaseSendMobileState> {
         yield SendMobileFailedState(error);
       }
     }
+    if(event is ChangeMobileEvent) {
+      yield ChangeMobileSuccessState();
+    }
     if (event is  SendMobileEvent) {
       yield  SendMobileLoadingState();
+      print('hr${event.userModel.toJson()}');
       DBHelper.insert('driver_data', event.userModel.toJson());
       UserModel userData;
       final driverDataDB =  await DBHelper.getData('driver_data');
       if(driverDataDB.isNotEmpty) userData = UserModel.fromJson(driverDataDB.first);
       await res.allRisk();
-
       yield  SendMobileSuccessState(userData: userData);
 
     }

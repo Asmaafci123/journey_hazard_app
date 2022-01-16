@@ -68,6 +68,9 @@
   "errorTitle": "خرابی",
   "successTitle": "کامیابی",
   "ok": "ٹھیک ہے",
-  "loading": "لوڈ ہو رہا ہے ..."
+  "loading": "لوڈ ہو رہا ہے ...",
+  "selectJobSite":"ایک مقام منتخب کریں",
+  "jobSites": "سائٹس",
+  "company": "کمپنی"
 
 }

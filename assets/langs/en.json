@@ -68,6 +68,9 @@
   "errorTitle": "Error",
   "successTitle": "Success",
   "ok": "OK",
-  "loading": "Loading ..."
+  "loading": "Loading ...",
+  "selectJobSite":"Select JobSite",
+  "jobSites": "JobSites",
+  "company": "Company"
 
 }

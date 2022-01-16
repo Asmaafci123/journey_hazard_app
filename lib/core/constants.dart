@@ -13,6 +13,8 @@ const String completeShipmentUrl = baseUrl +'/Shipment/Complete';
 const String allRiskUrl = baseUrl +'/Shipment/AllRisk';
 const String allCountriesUrl = baseUrl +'/risk/CountryList';
 const String MobileSupportUrl = baseUrl +'/Risk/SupportByCountry';
+const String JobSiteRiskUrl = baseUrl +'/JobsiteRisk/GetJobsites';
+const String JobSiteRiskListUrl = baseUrl +'/JobsiteRisk/GetRiskByJobsite';
 
 
 

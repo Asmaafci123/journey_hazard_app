@@ -56,5 +56,8 @@
   "errorTitle": "خطأ",
   "successTitle": "نجاح",
   "ok": "تم",
-  "loading": "جاري التحميل..."
+  "loading": "جاري التحميل...",
+  "selectJobSite":"أختر موقع",
+  "jobSites": "مواقع",
+  "company": "شركة"
 }

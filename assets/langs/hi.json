@@ -60,5 +60,8 @@
   "errorTitle": "त्रुटि",
   "successTitle": "सफलता",
   "ok": "ठीक है",
-  "loading": "लोड हो रहा है ..."
+  "loading": "लोड हो रहा है ...",
+  "selectJobSite":"एक स्थान चुनें",
+  "jobSites": "साइटों",
+  "company": "कंपनी"
 }

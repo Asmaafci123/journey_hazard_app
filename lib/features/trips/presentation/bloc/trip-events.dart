@@ -26,3 +26,6 @@ class StartTripEvent extends BaseTripEvent{}
 class SupportMobileEvent extends BaseTripEvent{}
 
 class ShowRiskInfoEvent extends BaseTripEvent{}
+
+class GetJobSiteRisksEvent extends BaseTripEvent{
+}

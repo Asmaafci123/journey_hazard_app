@@ -5,6 +5,8 @@ import 'package:journeyhazard/core/errors/custom_error.dart';
 import 'package:journeyhazard/core/errors/error_helper.dart';
 import 'package:journeyhazard/core/sqllite/sqlite_api.dart';
 import 'package:journeyhazard/features/login/data/models/user.dart';
+import 'package:journeyhazard/features/trips/data/models/jobsite.dart';
+import 'package:journeyhazard/features/trips/data/models/jobsitelist.dart';
 import 'package:journeyhazard/features/trips/data/models/trips.dart';
 import 'package:journeyhazard/features/trips/data/repositories/trips-repository-implementation.dart';
 import 'package:journeyhazard/features/trips/presentation/bloc/trip-events.dart';
@@ -74,6 +76,16 @@ class TripBloc extends Bloc<BaseTripEvent, BaseTripState> {
 
           yield TripCompletedState(userData: userData);
         }
+    }
+    else if (event is GetJobSiteRisksEvent){
+      final res = await repo.getJobSiteRisks(position, userData);
+      if (res.hasErrorOnly) {
+        // final CustomError error = res.error ;
+        final  error = ErrorHelper().getErrorMessage(res.error) ;
+        yield TripFailedState(error);
+      } else {
+        yield GetJobSiteRisksSuccessState(jobSiteList: res.data);
+      }
     }
     else if(event is StartTripEvent) {
     yield TripLoadingState();

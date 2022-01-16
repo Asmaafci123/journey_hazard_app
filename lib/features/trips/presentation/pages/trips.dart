@@ -2,19 +2,23 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 import 'dart:io' show Directory, Platform;
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animarker/core/ripple_marker.dart';
 import 'package:flutter_animarker/widgets/animarker.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:intl/date_symbol_data_file.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:journeyhazard/core/eventsTypes.dart';
 import 'package:journeyhazard/core/sqllite/sqlite_api.dart';
 import 'package:journeyhazard/features/login/data/models/user.dart';
 import 'package:journeyhazard/features/login/presentation/pages/login-page.dart';
 import 'package:journeyhazard/features/share/loading-dialog.dart';
+import 'package:journeyhazard/features/trips/data/models/jobsite.dart';
+import 'package:journeyhazard/features/trips/data/models/jobsitelist.dart';
 import 'package:journeyhazard/features/trips/data/models/risk.dart';
+import 'package:journeyhazard/features/trips/presentation/bloc/job_site_bloc.dart';
 import 'package:journeyhazard/features/trips/presentation/bloc/risk_bloc.dart';
 import 'package:journeyhazard/features/trips/presentation/bloc/trip-bloc.dart';
 import 'package:flutter/foundation.dart';
@@ -26,6 +30,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:localize_and_translate/localize_and_translate.dart';
 import 'package:journeyhazard/core/constants.dart';
+import 'package:sliding_sheet/sliding_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:journeyhazard/features/trips/presentation/bloc/trip-events.dart';
 import 'package:journeyhazard/features/trips/presentation/bloc/trip-state.dart';
@@ -45,6 +50,7 @@ class TripsWidgetState extends State<TripsWidget> {
   Completer<GoogleMapController> _controller = Completer();
   TripBloc _bloc = TripBloc();
   RiskBloc _blocRisk = RiskBloc();
+  JobSiteBloc _blocJobSite = JobSiteBloc();
   FlutterTts flutterTts;
 
   LatLng _center = LatLng(0.5937, 0.9629);
@@ -111,6 +117,17 @@ class TripsWidgetState extends State<TripsWidget> {
   static const eventChannel = EventChannel('com.cemex.hazar/gamepad_channel');
   StreamSubscription _eventChannel;
   int index = 0;
+
+  List<JobSite> imgList = [];
+  List<Widget> imageSliders = [];
+  List<JobSite> jobSitesData = [];
+  List<JobSite> itemsOfJobSites = [];
+  JobSite selectedJobSite;
+  int initPage = 0;
+  int lastIndex = 0;
+  CarouselController buttonCarouselController = CarouselController();
+  final _formKey = GlobalKey<FormState>();
+
   @override
   void initState() {
     setSourceAndDestinationIcons();
@@ -127,14 +144,15 @@ class TripsWidgetState extends State<TripsWidget> {
         });
       }
 
-      if (eventParameters[EventTypes.androidType] == EventTypes.button) {
+      if (eventParameters[EventTypes.androidType] == EventTypes.button && (eventParameters['keyCode'] != '25' && eventParameters['keyCode'] != '24')) {
         print('BUTTON: ${eventParameters['keyCode']}');
-        if(index== 0){
-          addNewRisk();
-          index++;
-        } else {
-          index = 0;
-        }
+          if(index== 0){
+            addNewRisk();
+            index++;
+          } else {
+            index = 0;
+          }
+
 
       } else if (eventParameters[EventTypes.androidType] == EventTypes.axis) {
         print('AXIS: $eventParameters');
@@ -266,7 +284,6 @@ class TripsWidgetState extends State<TripsWidget> {
 
   }
 
-
   void setInitialLocation() async {
     currentLocation = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
     if(currentLocation != null) {
@@ -283,7 +300,6 @@ class TripsWidgetState extends State<TripsWidget> {
       controller.animateCamera(update);
     }
   }
-
 
   addNewRisk(){
     // await record();
@@ -305,6 +321,7 @@ class TripsWidgetState extends State<TripsWidget> {
 
   Future _speak(_newVoiceText) async {
     print(_newVoiceText);
+
     if (_newVoiceText != null) {
       if (_newVoiceText.isNotEmpty) {
         for(int i = 0 ; i< 2 ;i++) {
@@ -315,6 +332,16 @@ class TripsWidgetState extends State<TripsWidget> {
     }
   }
 
+  Future _speakSlider(_newVoiceText) async {
+    print(_newVoiceText);
+    flutterTts.stop();
+    if (_newVoiceText != null) {
+      if (_newVoiceText.isNotEmpty) {
+          await flutterTts.awaitSpeakCompletion(true);
+          await flutterTts.speak(_newVoiceText);
+      }
+    }
+  }
   String distanceText(distance) {
     final di = (distance/1000).toString().substring(0,3);
     var record= '';
@@ -532,11 +559,284 @@ class TripsWidgetState extends State<TripsWidget> {
       if(runRisks.isNotEmpty) runRisk(runRisks.first);
     });
   }
+
+  showAsBottomSheet(){
+    print("here ${runRisks.length}");
+    if(runRisks.length == 0) _bloc.add(GetJobSiteRisksEvent());
+  }
+
+
+  void runBottomSheetContainer(context) async {
+    return showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+            return Container(
+                height: 800,
+                  padding: EdgeInsetsDirectional.only( start:5,end: 5 ),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 20,),
+                      Center(child: Text(translator.translate('selectJobSite'),style: TextStyle(fontFamily: FONT_FAMILY,fontWeight: FontWeight.w400,
+                          color: Colors.teal,fontSize: 24),
+                      ),),
+                      SizedBox(height: 25,),
+                      Form(
+                        key: _formKey,
+                        child: Material(
+                          child:DropdownSearch<JobSite>(
+                            label: translator.translate('jobSites'),
+                            items: itemsOfJobSites,
+                            selectedItem:selectedJobSite ,
+                            itemAsString: (JobSite u) => (currentLang == 'en')? u.jobsiteEn : u.jobsiteAr,
+                            onChanged: (JobSite data) {
+                              print(data);
+                              selectedJobSite = new JobSite.fromJson(data.toJson());
+                              _blocJobSite.add(ChangeJobSiteEvent(jobSite: selectedJobSite));
+                            },
+                            mode: Mode.DIALOG,
+                            showSearchBox: true,
+                            showAsSuffixIcons: true,
+                            enabled: true,
+                            popupTitle: Center(
+                              child: Text(translator.translate('jobSites'),
+                                  style: TextStyle(fontFamily: FONT_FAMILY,fontWeight: FontWeight.w600,fontSize: 20,
+                                      color: Colors.black45), ),
+                            ),
+                            // onFind: (text) async {
+                            //   print("(text) $text");
+                            //   return await itemsOfJobSites;
+                            // },
+                            filterFn: (item, filter) {
+                              print("filter$filter");
+                              return item.userFilterByJobSiteName(filter);
+                            } ,
+
+                          ),
+//                         DropdownButtonFormField<JobSite>(
+//                     decoration: InputDecoration(
+//                              hintText: translator.translate('jobSites') ,
+// //                          contentPadding: EdgeInsets.only(top: 1.0,bottom: 0.0),
+//                              hintStyle: TextStyle(fontFamily: FONT_FAMILY,fontWeight: FontWeight.w600),
+//                              prefixIcon: const Icon( Icons.home , color: Colors.teal, ),
+//                              border: InputBorder.none
+//                          ),
+//                          style: TextStyle(fontFamily: FONT_FAMILY,fontWeight: FontWeight.w600, color: Colors.black45),
+//                           value: selectedJobSite,
+//                           items: itemsOfJobSites.map((JobSite item) => DropdownMenuItem(
+//                             child: Text((currentLang == 'en')?item.jobsiteEn : item.jobsiteAr,
+//                               style:  TextStyle(fontWeight: FontWeight.w400, color: Colors.black54, fontFamily: FONT_FAMILY),
+//                             ),
+//                             value: item,
+//                           )).toList(),
+//                           onChanged: (value) {
+//                         selectedJobSite = new JobSite.fromJson(value.toJson());
+//                         // imgList = jobSitesData.where((e) => e.jobsiteId == selectedJobSite.jobsiteId ).toList();
+//                         // imageSliders = imgList.map((JobSite item) => Container(
+//                         //   child: Container(
+//                         //     child: ClipRRect(
+//                         //         borderRadius: BorderRadius.all(Radius.circular(5.0)),
+//                         //         child: Stack(
+//                         //           children: <Widget>[
+//                         //             Image.network('${item.image}', fit: BoxFit.cover, width: 1000.0),
+//                         //             Positioned(
+//                         //               bottom: 0.0,
+//                         //               left: 0.0,
+//                         //               right: 0.0,
+//                         //               child: Container(
+//                         //                 decoration: BoxDecoration(
+//                         //                   gradient: LinearGradient(
+//                         //                     colors: [
+//                         //                       Color.fromARGB(200, 0, 0, 0),
+//                         //                       Color.fromARGB(0, 0, 0, 0)
+//                         //                     ],
+//                         //                     begin: Alignment.bottomCenter,
+//                         //                     end: Alignment.topCenter,
+//                         //                   ),
+//                         //                 ),
+//                         //                 padding: EdgeInsets.symmetric(
+//                         //                     vertical: 10.0, horizontal: 20.0),
+//                         //                 child: Text((currentLang == 'en')? item.riskEn : item.riskAr,
+//                         //                   style: TextStyle(color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold,),
+//                         //                 ),
+//                         //               ),
+//                         //             ),
+//                         //           ],
+//                         //         )),
+//                         //   ),
+//                         // )).toList();
+//                         // buttonCarouselController.jumpToPage(initPage);
+//                         _blocJobSite.add(ChangeJobSiteEvent(jobSite: selectedJobSite));
+//                           },
+//                         ),
+                        ),
+                      ),
+                      BlocBuilder<JobSiteBloc, JobSiteState>(
+                        bloc: _blocJobSite,
+                          builder: (context, state) {
+                            // return widget here based on BlocA's state
+                            print(state);
+                            if (state is ChangeJobSiteRiskState){
+                              lastIndex = state.indexList;
+                            }
+                              if(state is ChangeJobSiteState ) {
+                             lastIndex = 0;
+                             imgList = state.jobSiteRiskList.data;
+                             if(imgList.length > 0) {
+                               imageSliders = state.jobSiteRiskList.data.map((JobSite item) => Container(
+                                 child: Container(
+                                   child: ClipRRect(
+                                       borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                                       child: Stack(
+                                         children: <Widget>[
+                                           Image.network('${item.image}', fit: BoxFit.cover, width: 1000.0),
+                                           Positioned(
+                                             bottom: 0.0,
+                                             left: 0.0,
+                                             right: 0.0,
+                                             child: Container(
+                                               decoration: BoxDecoration(
+                                                 gradient: LinearGradient(
+                                                   colors: [
+                                                     Color.fromARGB(200, 0, 0, 0),
+                                                     Color.fromARGB(0, 0, 0, 0)
+                                                   ],
+                                                   begin: Alignment.bottomCenter,
+                                                   end: Alignment.topCenter,
+                                                 ),
+                                               ),
+                                               padding: EdgeInsets.symmetric(
+                                                   vertical: 10.0, horizontal: 20.0),
+                                               child: Text((currentLang == 'en')? item.riskEn : item.riskAr,
+                                                 style: TextStyle(color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold,),
+                                               ),
+                                             ),
+                                           ),
+                                         ],
+                                       )),
+                                 ),
+                               )).toList();
+                               var text = (currentLang == 'en')?imgList.first.riskEn: imgList.first.riskAr;
+                                _speakSlider(text);
+                             }
+                           }
+                           return  Container(
+                             child: Padding(
+                               padding: const EdgeInsets.all(8.0),
+                               child: Column(children: [
+                                 SizedBox(height: 25,),
+                                 if( state is LoadingJobSiteState)    CircularProgressIndicator(),
+                                 (imgList.length > 0) ? Column(children: [
+                                   CarouselSlider(
+                                     carouselController: buttonCarouselController,
+                                     items:  imageSliders,
+                                     options: CarouselOptions(
+                                       enlargeCenterPage: true,
+                                       // height: 350,
+                                       aspectRatio: 16/9,
+                                       viewportFraction: 0.8,
+                                       initialPage: initPage,
+                                       enableInfiniteScroll: false,
+                                       reverse: false,
+                                       autoPlay: true,
+                                       autoPlayInterval: Duration(seconds: 10),
+                                       autoPlayAnimationDuration: Duration(milliseconds: 800),
+                                       autoPlayCurve: Curves.fastOutSlowIn,
+                                       onPageChanged: (index, reason) {
+                                         print('$index,$reason');
+                                         var text = '';
+                                         if(reason == CarouselPageChangedReason.timed && index <  lastIndex) {
+                                           // _speak('risk 0');
+                                            text = (currentLang == 'en')?imgList.first.riskEn: imgList.first.riskAr;
+                                            _speakSlider(text);
+                                         } else{
+                                           text = (currentLang == 'en')?imgList[index].riskEn: imgList[index].riskAr;
+                                           _speakSlider(text);
+                                         }
+                                         lastIndex = index;
+                                         _blocJobSite.add(ChangeJobSiteRiskEvent(index: index));
+                                       },
+                                       pageSnapping: true,
+                                       scrollDirection: Axis.horizontal,
+                                     ),
+                                   ),
+                                  Row(
+                                     mainAxisAlignment: MainAxisAlignment.spaceAround
+                                    ,
+                                     children:[
+                                       Flexible(
+                                         child: ElevatedButton(
+                                           onPressed: () => buttonCarouselController.previousPage(),
+                                           child: Text('←'),
+                                         ),
+                                       ),
+                                       Center(
+                                               child: Text("${lastIndex +1} /${imgList.length}",style: TextStyle(
+                                                 color: Colors.black
+                                               ),)
+                                       ),
+                                       Flexible(
+                                         child: ElevatedButton(
+                                           onPressed: () => buttonCarouselController.nextPage(),
+                                           child: Text('→'),
+                                         ),
+                                       ),
+                                     //   imgList.asMap().entries.map((entry) {
+                                     //   return GestureDetector(
+                                     //     // onTap: () => buttonCarouselController.animateToPage(entry.key),
+                                     //     child: Container(
+                                     //       width: 15.0,
+                                     //       height: 15.0,
+                                     //       margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                                     //       decoration: BoxDecoration(
+                                     //           shape: BoxShape.rectangle,
+                                     //           color: (Theme.of(context).brightness == Brightness.dark
+                                     //               ? Colors.white
+                                     //               : Colors.teal)
+                                     //               .withOpacity(1)),
+                                     //       child: Center(
+                                     //         child: Text("${state.indexList +1}",style: TextStyle(
+                                     //           color: Colors.white
+                                     //         ),),
+                                     //       ),
+                                     //     ),
+                                     //   );
+                                     // }).toList()
+                                     ],
+                                   ),
+                                 ],
+                               ): Column( children: <Widget>[
+                            Text(translator.translate('noData')),
+                            SizedBox( height: 10,),
+                            Container( height: 200, child: SvgPicture.asset(
+                            "assets/images/empty1.svg",
+                            )),
+                            ],
+                            )
+
+                               ],),
+                             ),
+                           );
+                             //
+
+
+                          }
+                      ),
+
+                    ],
+
+                  ),
+                );
+      }
+    );
+
+  }
   //End Functions
 
   @override
   void dispose() {
     _bloc.close();
+    _blocJobSite.close();
+    _blocRisk.close();
     positionStream.cancel();
     flutterTts.stop();
     // _myRecorder.closeAudioSession();
@@ -584,6 +884,29 @@ class TripsWidgetState extends State<TripsWidget> {
                         _controller.future.then((controller) => controller.animateCamera(CameraUpdate.newCameraPosition(_cameraPosition)));
                       });
                     }
+                  }
+                  if(state is GetJobSiteRisksSuccessState){
+                    itemsOfJobSites.clear();
+                    selectedJobSite= null;
+                  if(imgList.isNotEmpty)  imgList.clear();
+                  if(imageSliders != null)  imageSliders.clear();
+                  //    jobSitesData = state.jobSiteList.data;
+                  //   final Map<String, JobSite> jobSiteMap = new Map();
+                  //   jobSitesData.forEach((JobSite item) {
+                  //     jobSiteMap[item.jobsiteId] = item;
+                  //   });
+
+                    // itemsOfJobSites = jobSiteMap.values.toList();
+                      final jobSiteData = state.jobSiteList.data;
+                    jobSiteData.forEach((element) {
+                      double distanceInMeters = Geolocator.distanceBetween(currentLocation?.latitude, currentLocation?.longitude,
+                          double.parse(element.jobsiteLat), double.parse(element.jobsiteLong));
+                      if(distanceInMeters < 2000 ) {
+                        itemsOfJobSites.add(element);
+                      }
+                    });
+                    itemsOfJobSites = itemsOfJobSites.length > 0 ? itemsOfJobSites : jobSiteData;
+                     runBottomSheetContainer(context);
                   }
                   if (state is TripLoadingState ) loadingAlertDialog(context);
                   if (state is TripStartState) {
@@ -800,42 +1123,73 @@ class TripsWidgetState extends State<TripsWidget> {
                                 ],
                               ),
                             ),
-                        Container(
-                          margin: EdgeInsets.only(top: 80,right: 10,left:10),
-                          padding: EdgeInsets.all(5),
-                          height: 60,
-                          width:60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.teal,
-                          ),
-                          child: Material(
-                            elevation: 6,
-                            color: Colors.teal,
-                            borderRadius: BorderRadius.all(Radius.circular(50)),
-                            child:  IconButton(onPressed: _launchCaller,
-                                icon: Icon(Icons.call,color: Colors.white, size:30)
+                        Positioned(
+                          top: 80,
+                            left: 20,
+                            right: 20,
+                            child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(top: 3),
+                              padding: EdgeInsets.all(3),
+                              height: 50,
+                              width:50,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.grey,
+                              ),
+                              child:
+                              Material(
+                                elevation: 6,
+                                color: Colors.white,
+                                borderRadius: BorderRadius.all(Radius.circular(30)),
+                                child:  IconButton(onPressed: _launchCaller,
+                                    icon: Icon(Icons.call,color: Colors.green, size:30)
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        Container(
-                          margin: EdgeInsets.only(top: 160,right: 10,left:10),
-                          padding: EdgeInsets.all(5),
-                          height: 60,
-                          width:60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.blue,
-                          ),
-                          child: Material(
-                            elevation: 6,
-                            color: Colors.blue,
-                            borderRadius: BorderRadius.all(Radius.circular(50)),
-                            child:  IconButton(onPressed: repeatRisk,
-                                icon: Icon(Icons.refresh ,color: Colors.white, size:30)
+                            Container(
+                              margin: EdgeInsets.only(top:10),
+                              padding: EdgeInsets.all(3),
+                              height: 50,
+                              width:50,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.grey,
+                              ),
+                              child:
+                              Material(
+                                elevation: 6,
+                                color: Colors.white,
+                                borderRadius: BorderRadius.all(Radius.circular(30)),
+                                child:  IconButton(onPressed: showAsBottomSheet,
+                                    icon: Icon(Icons.home,color: Colors.orange, size:30)
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                            Container(
+                              margin: EdgeInsets.only(top: 10),
+                              padding: EdgeInsets.all(3),
+                              height: 50,
+                              width:50,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.grey,
+                              ),
+                              child: Material(
+                                elevation: 6,
+                                color: Colors.white,
+                                borderRadius: BorderRadius.all(Radius.circular(30)),
+                                child:  IconButton(onPressed: repeatRisk,
+                                    icon: Icon(Icons.refresh ,color: Colors.blue, size:30)
+                                ),
+                              ),
+                            ),
+                          ],
+                        )),
+
                         if (state is RunRiskState) Align(
                           alignment:Alignment.bottomCenter,
                           child: Container(

@@ -28,6 +28,7 @@ class DBHelper {
         'CREATE TABLE driver_data('
             'mobile TEXT,'
             'country TEXT,'
+            'company TEXT,'
             'supportNo TEXT,'
             'shipmentId TEXT)');
 
