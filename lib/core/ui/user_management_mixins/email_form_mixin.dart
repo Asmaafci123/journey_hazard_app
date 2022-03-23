@@ -34,7 +34,6 @@ mixin EmailFormMixin<T extends StatefulWidget> on State<T> {
           _emailValidation,
         );
       },
-      autovalidate: false,
       onChanged: (value) {
         if (!this.triedToSubmit) return;
         _emailValidation = true;

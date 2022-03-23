@@ -19,18 +19,18 @@ import 'package:journeyhazard/features/trips/data/models/trips.dart';
 import 'package:journeyhazard/features/trips/domain/repositories/trip-repositories.dart';
 
 class TripRepositoryImplementation implements TripRepository {
-  final  httpCall = HttpService();
+  final httpCall = HttpService();
 
   @override
-  Future<Result<RemoteResultModel<dynamic>>> completeShipment (Position currentPosition,  UserModel userData) async {
+  Future<Result<RemoteResultModel<dynamic>>> completeShipment(
+      Position currentPosition, UserModel userData) async {
     // UserModel userData;
     // final driverDataDB =  await DBHelper.getData('driver_data');
     // if(driverDataDB.isNotEmpty) {
     //   userData = UserModel.fromJson(driverDataDB.first);
     // }
 
-    var newRisk =
-    {
+    var newRisk = {
       "Risk_ID": 0,
       "Risk_AR": "2344",
       "Risk_EN": "complete",
@@ -38,23 +38,28 @@ class TripRepositoryImplementation implements TripRepository {
       "Long": currentPosition.longitude.toString(),
       "Comment": "01-02-3009",
       "Active": "false",
-      "Shipment_ID" :  userData.shipmentId,
-      "MobileNumber" : userData.mobile,
+      "Shipment_ID": userData.shipmentId,
+      "MobileNumber": userData.mobile,
       "country": userData.country,
       "Company": userData.company,
     };
 
-    final response = await CoreRepository.request(url: completeShipmentUrl, method: HttpMethod.POST, converter: null, data: newRisk);
+    final response = await CoreRepository.request(
+      url: completeShipmentUrl,
+      method: HttpMethod.POST,
+      converter: null,
+      data: newRisk,
+    );
     if (response.hasDataOnly) {
       final res = response.data;
       final _data = RemoteResultModel.fromJson(res);
       if (_data.flag) {
         final res = _data.data;
-        DBHelper.update('driver_data', null , 'shipmentId');
+        DBHelper.update('driver_data', null, 'shipmentId');
         await DBHelper.deleteAll('cemex_risk');
         CacheHelper.removeData(key: 'shipmentId');
         shipmentId = null;
-        TripsModel newData =  TripsModel.fromJson({"data":res});
+        TripsModel newData = TripsModel.fromJson({"data": res});
         newData.data.forEach((element) {
           DBHelper.insert('cemex_risk', element.toJson());
         });
@@ -65,36 +70,40 @@ class TripRepositoryImplementation implements TripRepository {
       }
     }
     if (response.hasErrorOnly) {
-      if(response.error is BadRequestError) {
-        BadRequestError error=  response.error ;
-        return Result(error: CustomError(message:error.message));
+      if (response.error is BadRequestError) {
+        BadRequestError error = response.error;
+        return Result(error: CustomError(message: error.message));
       }
-      return Result(error: CustomError(message:ErrorHelper().getErrorMessage(response.error)));
+      return Result(
+          error: CustomError(
+              message: ErrorHelper().getErrorMessage(response.error)));
       // return Result(error: response.error);
 
-    }  }
+    }
+  }
 
   @override
-  Future<Result<RemoteResultModel<dynamic>>> addHazarData(Position newPosition) async {
+  Future<Result<RemoteResultModel<dynamic>>> addHazarData(
+    Position newPosition,
+  ) async {
     UserModel userData;
 //    var dataDB =  await DBHelper.getData('trip_risk');
-    final driverDataDB =  await DBHelper.getData('driver_data');
-    if(driverDataDB.isNotEmpty) {
+    final driverDataDB = await DBHelper.getData('driver_data');
+    if (driverDataDB.isNotEmpty) {
       userData = UserModel.fromJson(driverDataDB.first);
     }
 
     RiskAddModel newRisk = new RiskAddModel(
-        riskId: 0,
-        lat: newPosition.latitude.toString(),
-        long: newPosition.longitude.toString(),
-        mobileNumber: userData.mobile,
-        shipmentId: userData.shipmentId,
-        country: userData.country,
+      riskId: 0,
+      lat: newPosition.latitude.toString(),
+      long: newPosition.longitude.toString(),
+      mobileNumber: userData.mobile,
+      shipmentId: userData.shipmentId,
+      country: userData.country,
       company: userData.company,
     );
 
-   print(newRisk.toSendJson());
-
+    print(newRisk.toSendJson());
 
 //    List list = List();
 //    dataDB.map((risk) async{
@@ -103,8 +112,11 @@ class TripRepositoryImplementation implements TripRepository {
 
 //    list.add(newRisk.toSendJson());
 //    print(newRisk.toSendJson());
-    final response = await CoreRepository.request(url: addHazard,
-        method: HttpMethod.POST, converter: null, data: newRisk.toSendJson());
+    final response = await CoreRepository.request(
+        url: addHazard,
+        method: HttpMethod.POST,
+        converter: null,
+        data: newRisk.toSendJson());
     if (response.hasDataOnly) {
 //      print(response.data);
       final res = response.data;
@@ -113,7 +125,6 @@ class TripRepositoryImplementation implements TripRepository {
       if (_data.flag) {
         // await DBHelper.deleteByStatus('trip_risk','New');
         return Result(data: _data);
-
       } else {
 //        newRisk.status = "New";
 //        DBHelper.insert('trip_risk', newRisk.toSqlJson());
@@ -124,23 +135,27 @@ class TripRepositoryImplementation implements TripRepository {
 //      print("internet Error Azhar");
 //      newRisk.status = "New";
 //      DBHelper.insert('trip_risk', newRisk.toSqlJson());
-      if(response.error is BadRequestError) {
-        BadRequestError error=  response.error ;
-        return Result(error: CustomError(message:error.message));
+      if (response.error is BadRequestError) {
+        BadRequestError error = response.error;
+        return Result(error: CustomError(message: error.message));
       }
 //
-      return Result(error: CustomError(message:ErrorHelper().getErrorMessage(response.error)));
+      return Result(
+          error: CustomError(
+              message: ErrorHelper().getErrorMessage(response.error)));
 //       return Result(error: response.error);
 
     }
   }
 
   @override
-  Future<Result<RemoteResultModel<dynamic>>> doneHazarData(RiskModel risk) async {
+  Future<Result<RemoteResultModel<dynamic>>> doneHazarData(
+    RiskModel risk,
+  ) async {
     UserModel userData;
-    var dataDB =  await DBHelper.getData('trip_risk');
-    final driverDataDB =  await DBHelper.getData('driver_data');
-    if(driverDataDB.isNotEmpty) {
+    var dataDB = await DBHelper.getData('trip_risk');
+    final driverDataDB = await DBHelper.getData('driver_data');
+    if (driverDataDB.isNotEmpty) {
       userData = UserModel.fromJson(driverDataDB.first);
     }
 
@@ -151,21 +166,23 @@ class TripRepositoryImplementation implements TripRepository {
         mobileNumber: userData.mobile,
         shipmentId: userData.shipmentId,
         country: userData.country,
-        company: userData.company
-    );
+        company: userData.company);
 
 //    print(newRisk.toSqlJson());
 
     List list = List();
-    dataDB.map((risk) async{
+    dataDB.map((risk) async {
       // if (risk['status'] == 'Done' )
-        list.add(RiskAddModel.fromJson(risk).toSendJson());
+      list.add(RiskAddModel.fromJson(risk).toSendJson());
     }).toList();
 
     list.add(newRisk.toSendJson());
 //    print(json.encode(list));
-    final response = await CoreRepository.request(url: doneHazard,
-        method: HttpMethod.POST, converter: null, data: json.encode(list));
+    final response = await CoreRepository.request(
+        url: doneHazard,
+        method: HttpMethod.POST,
+        converter: null,
+        data: json.encode(list));
     if (response.hasDataOnly) {
 //      print(response.data);
       final res = response.data;
@@ -182,21 +199,24 @@ class TripRepositoryImplementation implements TripRepository {
     if (response.hasErrorOnly) {
       newRisk.status = 'Done';
       DBHelper.insert('trip_risk', newRisk.toSqlJson());
-      if(response.error is BadRequestError) {
-        BadRequestError error=  response.error ;
-        return Result(error: CustomError(message:error.message));
+      if (response.error is BadRequestError) {
+        BadRequestError error = response.error;
+        return Result(error: CustomError(message: error.message));
       }
-      return Result(error: CustomError(message:ErrorHelper().getErrorMessage(response.error)));
-    //   return Result(error: response.error);
+      return Result(
+          error: CustomError(
+              message: ErrorHelper().getErrorMessage(response.error)));
+      //   return Result(error: response.error);
 
     }
   }
 
   @override
-  Future<Result<RemoteResultModel<dynamic>>> removeHazarData(RiskModel risk) async {
+  Future<Result<RemoteResultModel<dynamic>>> removeHazarData(
+      RiskModel risk) async {
     UserModel userData;
-    final driverDataDB =  await DBHelper.getData('driver_data');
-    if(driverDataDB.isNotEmpty) {
+    final driverDataDB = await DBHelper.getData('driver_data');
+    if (driverDataDB.isNotEmpty) {
       userData = UserModel.fromJson(driverDataDB.first);
     }
 
@@ -210,15 +230,19 @@ class TripRepositoryImplementation implements TripRepository {
       company: userData.company,
     );
 
-    final response = await CoreRepository.request(url: addHazard,
-        method: HttpMethod.POST, converter: null, data: newRisk.toSendJson());
+    final response = await CoreRepository.request(
+      url: addHazard,
+      method: HttpMethod.POST,
+      converter: null,
+      data: newRisk.toSendJson(),
+    );
     if (response.hasDataOnly) {
 //      print(response.data);
       final res = response.data;
       final _data = RemoteResultModel<int>.fromJson(res);
 
       if (_data.flag) {
-        // await DBHelper.deleteByStatus('trip_risk','Remove');
+        //await DBHelper.deleteByStatus('trip_risk','Remove');
         return Result(data: _data);
       } else {
         return Result(error: CustomError(message: _data.message));
@@ -228,23 +252,26 @@ class TripRepositoryImplementation implements TripRepository {
 //      print("internet Error Azhar");
 //      newRisk.status = "Remove";
 //      DBHelper.insert('trip_risk', newRisk.toSqlJson());
-      if(response.error is BadRequestError) {
-        BadRequestError error=  response.error ;
-        return Result(error: CustomError(message:error.message));
+      if (response.error is BadRequestError) {
+        BadRequestError error = response.error;
+        return Result(error: CustomError(message: error.message));
       }
-      return Result(error: CustomError(message: ErrorHelper().getErrorMessage(response.error)));
+      return Result(
+        error: CustomError(
+          message: ErrorHelper().getErrorMessage(response.error),
+        ),
+      );
     }
   }
 
   @override
   Future<Result<dynamic>> mobileSupport() async {
     UserModel userData;
-    final driverDataDB =  await DBHelper.getData('driver_data');
-    if(driverDataDB.isNotEmpty) {
+    final driverDataDB = await DBHelper.getData('driver_data');
+    if (driverDataDB.isNotEmpty) {
       userData = UserModel.fromJson(driverDataDB.first);
     }
-    var data =
-    {
+    var data = {
       "Risk_ID": 0,
       "Risk_AR": "2344",
       "Risk_EN": "complete",
@@ -252,21 +279,26 @@ class TripRepositoryImplementation implements TripRepository {
       "Long": '',
       "Comment": "01-02-3009",
       "Active": "false",
-      "Shipment_ID" :  userData.shipmentId,
-      "MobileNumber" : userData.mobile,
+      "Shipment_ID": userData.shipmentId,
+      "MobileNumber": userData.mobile,
       "country": userData.country,
       "Company": userData.company,
     };
 //    print(data);
     // TODO: implement  ForgotPassword
-    final response = await CoreRepository.request(url: MobileSupportUrl, method: HttpMethod.POST, converter: null, data:data);
+    final response = await CoreRepository.request(
+      url: MobileSupportUrl,
+      method: HttpMethod.POST,
+      converter: null,
+      data: data,
+    );
     if (response.hasDataOnly) {
 //      print(response.data);
       final res = response.data;
       final _data = RemoteResultModel<String>.fromJson(res);
       if (_data.flag) {
-
-      if(_data.data.length > 0)  await DBHelper.update('driver_data', _data.data , 'supportNo');
+        if (_data.data.length > 0)
+          await DBHelper.update('driver_data', _data.data, 'supportNo');
 
         return Result(data: _data.data);
       } else {
@@ -275,13 +307,19 @@ class TripRepositoryImplementation implements TripRepository {
       }
     }
     if (response.hasErrorOnly) {
-      return Result(error: CustomError(message: ErrorHelper().getErrorMessage(response.error)));
+      return Result(
+        error: CustomError(
+          message: ErrorHelper().getErrorMessage(response.error),
+        ),
+      );
     }
   }
 
   @override
-  Future<Result<dynamic>> getJobSiteRisks(Position position,  UserModel driverData) async{
-
+  Future<Result<dynamic>> getJobSiteRisks(
+    Position position,
+    UserModel driverData,
+  ) async {
     var userData = {
       "Risk_ID": 0,
       "Risk_AR": "2344",
@@ -290,58 +328,18 @@ class TripRepositoryImplementation implements TripRepository {
       "Long": position.longitude.toString(),
       "Comment": "01-02-3009",
       "Active": "false",
-      "Shipment_ID" :  "0",
-      "MobileNumber" : driverData.mobile.toString(),
+      "Shipment_ID": "0",
+      "MobileNumber": driverData.mobile.toString(),
       "Country": driverData.country,
       "Company": driverData.company
     };
-   print(userData);
-    // TODO: implement LoginUser
-    final response = await CoreRepository.request(url: JobSiteRiskUrl, method: HttpMethod.POST, converter: null, data:userData);
-    if (response.hasDataOnly) {
-     print(response.data);
-      final res = response.data;
-      print("response:${response.data}");
-      final _data = RemoteResultModel.fromJson(res);
-      if (_data.flag) {
-        final res = _data.data;
-        JobSiteList newData=  JobSiteList.fromJson({"data":res});
-        return Result(data: newData);
-      } else {
-        final msg = _data.message;
-        return Result(error: CustomError(message: msg));
-      }
-    }
-    if (response.hasErrorOnly) {
-      if(response.error is BadRequestError) {
-        BadRequestError error=  response.error ;
-        return Result(error: CustomError(message:error.message));
-      }
-      return Result(error: CustomError(message:response.error.toString()));
-    }
-  }
-
-
-  @override
-  Future<Result<dynamic>> getRisksByJobSite(Position position, UserModel driverData, JobSite jobSite) async{
-
-    var userData = {
-      "Risk_ID": 0,
-      "Risk_AR": "2344",
-      "Risk_EN": "complete",
-      "Lat": position.latitude.toString(),
-      "Long": position.longitude.toString(),
-      "Comment": "01-02-3009",
-      "Active": "false",
-      "Shipment_ID" :  "0",
-      "MobileNumber" : driverData.mobile.toString(),
-      "Country": driverData.country,
-      "Company": driverData.company,
-      "JobSite": jobSite.jobsiteId
-    };
     print(userData);
-    // TODO: implement LoginUser
-    final response = await CoreRepository.request(url: JobSiteRiskListUrl, method: HttpMethod.POST, converter: null, data:userData);
+    final response = await CoreRepository.request(
+      url: JobSiteRiskUrl,
+      method: HttpMethod.POST,
+      converter: null,
+      data: userData,
+    );
     if (response.hasDataOnly) {
       print(response.data);
       final res = response.data;
@@ -349,7 +347,7 @@ class TripRepositoryImplementation implements TripRepository {
       final _data = RemoteResultModel.fromJson(res);
       if (_data.flag) {
         final res = _data.data;
-        JobSiteList newData =  JobSiteList.fromJson({"data":res});
+        JobSiteList newData = JobSiteList.fromJson({"data": res});
         return Result(data: newData);
       } else {
         final msg = _data.message;
@@ -357,11 +355,61 @@ class TripRepositoryImplementation implements TripRepository {
       }
     }
     if (response.hasErrorOnly) {
-      if(response.error is BadRequestError) {
-        BadRequestError error=  response.error ;
-        return Result(error: CustomError(message:error.message));
+      if (response.error is BadRequestError) {
+        BadRequestError error = response.error;
+        return Result(error: CustomError(message: error.message));
       }
-      return Result(error: CustomError(message:response.error.toString()));
+      return Result(error: CustomError(message: response.error.toString()));
+    }
+  }
+
+  @override
+  Future<Result<dynamic>> getRisksByJobSite(
+    Position position,
+    UserModel driverData,
+    JobSite jobSite,
+  ) async {
+    var userData = {
+      "Risk_ID": 0,
+      "Risk_AR": "2344",
+      "Risk_EN": "complete",
+      "Lat": position.latitude.toString(),
+      "Long": position.longitude.toString(),
+      "Comment": "01-02-3009",
+      "Active": "false",
+      "Shipment_ID": "0",
+      "MobileNumber": driverData.mobile.toString(),
+      "Country": driverData.country,
+      "Company": driverData.company,
+      "JobSite": jobSite.jobsiteId
+    };
+    print(userData);
+    // TODO: implement LoginUser
+    final response = await CoreRepository.request(
+        url: JobSiteRiskListUrl,
+        method: HttpMethod.POST,
+        converter: null,
+        data: userData);
+    if (response.hasDataOnly) {
+      print(response.data);
+      final res = response.data;
+      print("response:${response.data}");
+      final _data = RemoteResultModel.fromJson(res);
+      if (_data.flag) {
+        final res = _data.data;
+        JobSiteList newData = JobSiteList.fromJson({"data": res});
+        return Result(data: newData);
+      } else {
+        final msg = _data.message;
+        return Result(error: CustomError(message: msg));
+      }
+    }
+    if (response.hasErrorOnly) {
+      if (response.error is BadRequestError) {
+        BadRequestError error = response.error;
+        return Result(error: CustomError(message: error.message));
+      }
+      return Result(error: CustomError(message: response.error.toString()));
     }
   }
 }

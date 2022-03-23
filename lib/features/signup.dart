@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'home.dart';
 import 'login-demo.dart';
 
 class SignupWidget extends StatefulWidget {
@@ -12,13 +11,33 @@ class SignupWidget extends StatefulWidget {
 class _SignupWidgetState extends State<SignupWidget> {
   Item selectedUser;
   List<Item> users = <Item>[
-    const Item('Android',Icon(Icons.android,color:  const Color(0xFF167F67),)),
-    const Item('Flutter',Icon(Icons.flag,color:  const Color(0xFF167F67),)),
-    const Item('ReactNative',Icon(Icons.format_indent_decrease,color:  const Color(0xFF167F67),)),
-    const Item('iOS',Icon(Icons.mobile_screen_share,color:  const Color(0xFF167F67),)),
+    const Item(
+        'Android',
+        Icon(
+          Icons.android,
+          color: const Color(0xFF167F67),
+        )),
+    const Item(
+        'Flutter',
+        Icon(
+          Icons.flag,
+          color: const Color(0xFF167F67),
+        )),
+    const Item(
+        'ReactNative',
+        Icon(
+          Icons.format_indent_decrease,
+          color: const Color(0xFF167F67),
+        )),
+    const Item(
+        'iOS',
+        Icon(
+          Icons.mobile_screen_share,
+          color: const Color(0xFF167F67),
+        )),
   ];
   @override
-  Widget  build(BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
 //      appBar: AppBar(
@@ -28,10 +47,9 @@ class _SignupWidgetState extends State<SignupWidget> {
         child: Column(
           children: <Widget>[
             Padding(
-              padding: const EdgeInsets.only(top: 60.0,bottom: 20.0),
+              padding: const EdgeInsets.only(top: 60.0, bottom: 20.0),
               child: Center(
-                child: Text('Sign Up',style:TextStyle(fontSize: 25.0))),
-
+                  child: Text('Sign Up', style: TextStyle(fontSize: 25.0))),
             ),
             Padding(
               //padding: const EdgeInsets.only(left:15.0,right: 15.0,top:0,bottom: 0),
@@ -64,18 +82,17 @@ class _SignupWidgetState extends State<SignupWidget> {
               ),
             ),
             Padding(
-              //padding: const EdgeInsets.only(left:15.0,right: 15.0,top:0,bottom: 0),
-              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10.0),
-              child: Container(
-                padding: EdgeInsets.all(5.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[350], width: 2),
-                  borderRadius: BorderRadius.circular(5)
-                ),
-                child: DropdownButton<Item>(
+                //padding: const EdgeInsets.only(left:15.0,right: 15.0,top:0,bottom: 0),
+                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10.0),
+                child: Container(
+                  padding: EdgeInsets.all(5.0),
+                  decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[350], width: 2),
+                      borderRadius: BorderRadius.circular(5)),
+                  child: DropdownButton<Item>(
                     underline: SizedBox(),
                     iconSize: 40.0,
-                    hint:  Text("Choose Industry"),
+                    hint: Text("Choose Industry"),
                     value: selectedUser,
                     isExpanded: true,
                     onChanged: (Item Value) {
@@ -84,47 +101,50 @@ class _SignupWidgetState extends State<SignupWidget> {
                       });
                     },
                     items: users.map((Item user) {
-                      return  DropdownMenuItem<Item>(
+                      return DropdownMenuItem<Item>(
                         value: user,
                         child: Row(
                           children: <Widget>[
                             user.icon,
-                            SizedBox(width: 100,),
+                            SizedBox(
+                              width: 100,
+                            ),
                             Text(
                               user.name,
-                              style:  TextStyle(color: Colors.black),
+                              style: TextStyle(color: Colors.black),
                             ),
                           ],
                         ),
                       );
-                    }).toList(),) ,
-              )
+                    }).toList(),
                   ),
+                )),
             Padding(
-              //padding: const EdgeInsets.only(left:15.0,right: 15.0,top:0,bottom: 0),
-              padding: EdgeInsets.symmetric(horizontal: 15),
-              child:Row(children: [
-                Expanded(
-                  flex: 1,
-                  child:   TextField(
-                  decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Contact Name',
-                      hintText: 'Enter valid company Address'),
-                ),),
-
-                SizedBox(width:20.0),
-                Expanded(
-                  flex: 1,
-                  child:  TextField(
-                  decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Contact Phone',
-                      hintText: 'Enter valid company Address'),
-                ),
-                ),
-              ],)
-            ),
+                //padding: const EdgeInsets.only(left:15.0,right: 15.0,top:0,bottom: 0),
+                padding: EdgeInsets.symmetric(horizontal: 15),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: TextField(
+                        decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Contact Name',
+                            hintText: 'Enter valid company Address'),
+                      ),
+                    ),
+                    SizedBox(width: 20.0),
+                    Expanded(
+                      flex: 1,
+                      child: TextField(
+                        decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Contact Phone',
+                            hintText: 'Enter valid company Address'),
+                      ),
+                    ),
+                  ],
+                )),
             Padding(
               //padding: const EdgeInsets.only(left:15.0,right: 15.0,top:0,bottom: 0),
               padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10.0),
@@ -136,8 +156,10 @@ class _SignupWidgetState extends State<SignupWidget> {
               ),
             ),
             Padding(
-          padding: EdgeInsets.symmetric(horizontal: 15,),
-            child: TextField(
+              padding: EdgeInsets.symmetric(
+                horizontal: 15,
+              ),
+              child: TextField(
                 obscureText: true,
                 decoration: InputDecoration(
                     border: OutlineInputBorder(),
@@ -151,13 +173,12 @@ class _SignupWidgetState extends State<SignupWidget> {
             Container(
               height: 50,
               width: 250,
-
               decoration: BoxDecoration(
                   color: Colors.blue, borderRadius: BorderRadius.circular(20)),
               child: FlatButton(
                 onPressed: () {
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (_) => HomeWidget()));
+                  // Navigator.push(
+                  //     context, MaterialPageRoute(builder: (_) => HomeWidget()));
                 },
                 child: Text(
                   'Sign Up',
@@ -174,8 +195,9 @@ class _SignupWidgetState extends State<SignupWidget> {
     );
   }
 }
+
 class Item {
-  const Item(this.name,this.icon);
+  const Item(this.name, this.icon);
   final String name;
   final Icon icon;
 }

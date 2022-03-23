@@ -35,7 +35,6 @@ mixin UserNameFormMixin<T extends StatefulWidget> on State<T> {
           _validation,
         );
       },
-      autovalidate: false,
       onFieldSubmitted: (term) {
         this.triedToSubmit = true;
         setState(() {});

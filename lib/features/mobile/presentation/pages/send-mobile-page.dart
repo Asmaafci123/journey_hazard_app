@@ -18,27 +18,31 @@ import 'package:journeyhazard/features/login/presentation/bloc/login-state.dart'
 import 'package:localize_and_translate/localize_and_translate.dart';
 import 'package:journeyhazard/features/trips/presentation/pages/trips.dart';
 
-import '../../../home.dart';
-
-class  SendMobileWidget extends StatefulWidget {
+class SendMobileWidget extends StatefulWidget {
   static const routeName = ' SendMobileWidget';
 
-  SendMobileWidgetState createState() =>  SendMobileWidgetState();
+  SendMobileWidgetState createState() => SendMobileWidgetState();
 }
 
-class  SendMobileWidgetState extends State< SendMobileWidget> {
+class SendMobileWidgetState extends State<SendMobileWidget> {
   SendMobileBloc _bloc = SendMobileBloc(BaseSendMobileState());
   TextEditingController mobileController = TextEditingController();
-  UserModel user = new UserModel(mobile: '',country: '',supportNo: '000', company: 'Cement');
+  UserModel user = new UserModel(
+      mobile: '', country: '', supportNo: '000', company: 'Cement');
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _clicked = false;
   CountryModel selectedCountry;
-  List<CountryModel> countries =  [];
+  List<CountryModel> countries = [];
 
   LanguageModel selectedLang;
-  List<LanguageModel> languages =  [ LanguageModel(code: 'ar',lang: 'arabic'),
-    LanguageModel(code: 'en',lang: 'english'),LanguageModel(code: 'fil',lang: 'filipino'),
-    LanguageModel(code: 'hi',lang: 'hindi'),LanguageModel(code: 'ur',lang: 'urdu')];
+  List<LanguageModel> languages = [
+    LanguageModel(code: 'ar', lang: 'arabic'),
+    LanguageModel(code: 'en', lang: 'english'),
+    LanguageModel(code: 'fil', lang: 'filipino'),
+    LanguageModel(code: 'hi', lang: 'hindi'),
+    LanguageModel(code: 'ur', lang: 'urdu'),
+    LanguageModel(code: 'es', lang: 'Spanish')
+  ];
 
   final TextEditingController controller = TextEditingController();
   String initialCountry = 'EG';
@@ -52,12 +56,14 @@ class  SendMobileWidgetState extends State< SendMobileWidget> {
 //    print(translator.currentLanguage);
     super.initState();
     _bloc.add(GetCountriesEvent());
-
   }
+
 // validate Mobile
   String validateMobile(String value) {
     if (value.isNotEmpty) {
-      return RegExp(r'^01(0|1|2|5){1}[0-9]{8}$').hasMatch(value) ? null :  translator.translate('required') ;
+      return RegExp(r'^01(0|1|2|5){1}[0-9]{8}$').hasMatch(value)
+          ? null
+          : translator.translate('required');
     }
     return null;
   }
@@ -67,9 +73,10 @@ class  SendMobileWidgetState extends State< SendMobileWidget> {
     _bloc.close();
     super.dispose();
   }
+
   void getPhoneNumber(String phoneNumber) async {
     PhoneNumber number =
-    await PhoneNumber.getRegionInfoFromPhoneNumber(phoneNumber, 'US');
+        await PhoneNumber.getRegionInfoFromPhoneNumber(phoneNumber, 'US');
 
     setState(() {
       this.number = number;
@@ -77,19 +84,19 @@ class  SendMobileWidgetState extends State< SendMobileWidget> {
   }
 
   @override
-  Widget  build(BuildContext context) {
+  Widget build(BuildContext context) {
     // TODO: implement  build
-      return Scaffold(
-    backgroundColor: Colors.white,
-    body:SingleChildScrollView(
-    child: Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Container(
-        height: MediaQuery.of(context).size.height-40,
-        child: Column(
-          children: [
-            Expanded(
-              child: Column(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Container(
+            height: MediaQuery.of(context).size.height - 40,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Column(
                     children: <Widget>[
                       Padding(
                         padding: const EdgeInsets.only(top: 80.0),
@@ -106,91 +113,121 @@ class  SendMobileWidgetState extends State< SendMobileWidget> {
                       BlocConsumer(
                           bloc: _bloc,
                           builder: (context, state) {
-
                             return Form(
                               key: _formKey,
-                              autovalidateMode: AutovalidateMode.onUserInteraction,
-                              child: Column(
-                                  children: <Widget>[
-                                    Padding(
-                              padding: const EdgeInsets.symmetric( vertical: 25.0),
-
-                              child: InternationalPhoneNumberInput(
-                                spaceBetweenSelectorAndTextField: 0.0,
-                                        onInputChanged: (PhoneNumber number) {
-                                          this.user?.mobile = number.phoneNumber.toString();
-                                          this.user?.country = countries.firstWhere((element) => element.countryCode ==number.isoCode).country;
-                                          companies = countries.where((element) => element.countryCode ==number.isoCode).toList();
-                                          print(companies);
-                                          if(companies.length == 1) {
-                                            selectedCountry = companies.first;
-                                            this.user?.company = selectedCountry.company;
-                                          } else {
-                                            selectedCountry = null;
-                                            this.user?.company = null;
-                                          }
-                                          _bloc.add(ChangeMobileEvent());
-                                        },
-                                        onInputValidated: (bool value) {
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              child: Column(children: <Widget>[
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 25.0),
+                                  child: InternationalPhoneNumberInput(
+                                    spaceBetweenSelectorAndTextField: 0.0,
+                                    onInputChanged: (PhoneNumber number) {
+                                      this.user?.mobile =
+                                          number.phoneNumber.toString();
+                                      this.user?.country = countries
+                                          .firstWhere((element) =>
+                                              element.countryCode ==
+                                              number.isoCode)
+                                          .country;
+                                      companies = countries
+                                          .where((element) =>
+                                              element.countryCode ==
+                                              number.isoCode)
+                                          .toList();
+                                      print(companies);
+                                      if (companies.length == 1) {
+                                        selectedCountry = companies.first;
+                                        this.user?.company =
+                                            selectedCountry.company;
+                                      } else {
+                                        selectedCountry = null;
+                                        this.user?.company = null;
+                                      }
+                                      _bloc.add(ChangeMobileEvent());
+                                    },
+                                    onInputValidated: (bool value) {
 //                                          print(value);
-                                        },
-                                        selectorConfig: SelectorConfig(
-                                          selectorType: PhoneInputSelectorType.DIALOG,
-                                        ),
-                                        ignoreBlank: false,
-                                        autoValidateMode: AutovalidateMode.onUserInteraction,
-                                        selectorTextStyle: TextStyle(color: Colors.black),
-                                        initialValue: number,
-                                        textFieldController: controller,
-                                        formatInput: false,
-                                        keyboardType:
-                                        TextInputType.numberWithOptions(signed: true, decimal: true),
+                                    },
+                                    selectorConfig: SelectorConfig(
+                                      selectorType:
+                                          PhoneInputSelectorType.DIALOG,
+                                    ),
+                                    ignoreBlank: false,
+                                    autoValidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                    selectorTextStyle:
+                                        TextStyle(color: Colors.black),
+                                    initialValue: number,
+                                    textFieldController: controller,
+                                    formatInput: false,
+                                    keyboardType:
+                                        TextInputType.numberWithOptions(
+                                            signed: true, decimal: true),
 //                                        inputBorder: OutlineInputBorder(),
-                              errorMessage: translator.translate('required'),
-                                        onSaved: (PhoneNumber number) {
+                                    errorMessage:
+                                        translator.translate('required'),
+                                    onSaved: (PhoneNumber number) {
 //                                          print('On Saved: $number');
-
-                                        },
-                                countries: countries.map((e) => e.countryCode).toList(),
-                                inputDecoration: InputDecoration(
-                                  hintText: translator.translate('phone'),
+                                    },
+                                    countries: countries
+                                        .map((e) => e.countryCode)
+                                        .toList(),
+                                    inputDecoration: InputDecoration(
+                                      hintText: translator.translate('phone'),
+                                    ),
+                                    locale: translator.currentLanguage,
+                                  ),
                                 ),
-                                locale: translator.currentLanguage,
-
+                                Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 15.0),
+                                  child: DropdownButtonFormField<CountryModel>(
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      labelText:
+                                          translator.translate('company'),
+                                      contentPadding: EdgeInsets.only(
+                                          top: 1.0, bottom: 0.0),
+                                      labelStyle: TextStyle(
+                                          fontFamily: FONT_FAMILY,
+                                          fontWeight: FontWeight.w600),
+                                      prefixIcon: const Icon(
+                                        Icons.business_sharp,
                                       ),
                                     ),
-                                   Padding(
-                                     padding: EdgeInsets.symmetric( vertical: 15.0),
-                                     child:DropdownButtonFormField<CountryModel>(
-                                       decoration: InputDecoration(
-                                         border: OutlineInputBorder(),
-                                         labelText: translator.translate('company'),
-                                         contentPadding: EdgeInsets.only(top: 1.0,bottom: 0.0),
-                                         labelStyle: TextStyle(fontFamily: FONT_FAMILY,fontWeight: FontWeight.w600),
-                                         prefixIcon: const Icon( Icons.business_sharp ,  ),
-                                       ),
-                                       style: TextStyle(fontFamily: FONT_FAMILY,fontWeight: FontWeight.w400, color: Colors.grey),
-                                       validator: (value) => value == null ? translator.translate('required') : null,
-                                       value: selectedCountry,
-                                       isExpanded: true,
-                                       onChanged: (CountryModel value) {
-                                           selectedCountry = value;
-                                           this.user?.company = value.company;
-                                       },
-                                       items: companies.map((CountryModel country) {
-                                         return  DropdownMenuItem<CountryModel>(
-                                           value: country,
-                                           child: Row(
-                                             children: <Widget>[
-                                               Text( country.company,
-                                                 style:  TextStyle(fontWeight: FontWeight.w400, color: Colors.black45, fontFamily: FONT_FAMILY),
-                                               ),
-                                             ],
-                                           ),
-                                         );
-                                       }).toList(),
-                                     ) ,
-                                   ),
+                                    style: TextStyle(
+                                        fontFamily: FONT_FAMILY,
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.grey),
+                                    validator: (value) => value == null
+                                        ? translator.translate('required')
+                                        : null,
+                                    value: selectedCountry,
+                                    isExpanded: true,
+                                    onChanged: (CountryModel value) {
+                                      selectedCountry = value;
+                                      this.user?.company = value.company;
+                                    },
+                                    items:
+                                        companies.map((CountryModel country) {
+                                      return DropdownMenuItem<CountryModel>(
+                                        value: country,
+                                        child: Row(
+                                          children: <Widget>[
+                                            Text(
+                                              country.company,
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.w400,
+                                                  color: Colors.black45,
+                                                  fontFamily: FONT_FAMILY),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
 //                                    Padding(
 //                                      padding: EdgeInsets.symmetric(vertical: 25),
 //                                      child:
@@ -215,51 +252,71 @@ class  SendMobileWidgetState extends State< SendMobileWidget> {
 //                                        },
 //                                      ),
 //                                    ),
-                                    if (state is  SendMobileFailedState)  Padding(
-                                        padding: const EdgeInsets.only(left: 15.0, right: 15.0, top: 5, bottom: 5),
-                                        child:Align(child: Text(state.error.message,
-                                          style: TextStyle(color: Colors.red, fontFamily: FONT_FAMILY,fontWeight: FontWeight.w600),),
-                                      alignment: Alignment.centerRight,
-                                    )),
-                                    Container(
-                                      margin: EdgeInsets.only(top: 30),
-                                      height: 50,
-                                      width: MediaQuery.of(context).size.width - 40.0,
-                                      decoration: BoxDecoration( color: Colors.teal, borderRadius: BorderRadius.circular(5),),
-                                      child: FlatButton(
-                                        onPressed: () {
-
-                                            if (!_formKey.currentState.validate()) {
-                                              return;
-                                            }
-                                            if (_formKey.currentState.validate()) {
-//                                              print(this.user.toJson());
-                                              _bloc.add(SendMobileEvent(userModel: this.user));
-                                            }
-
-                                        },
+                                if (state is SendMobileFailedState)
+                                  Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 15.0,
+                                          right: 15.0,
+                                          top: 5,
+                                          bottom: 5),
+                                      child: Align(
                                         child: Text(
-                                          translator.translate('next'),
-                                          style: TextStyle(color: Colors.white,  fontFamily: FONT_FAMILY,fontWeight: FontWeight.w600),
+                                          state.error.message,
+                                          style: TextStyle(
+                                              color: Colors.red,
+                                              fontFamily: FONT_FAMILY,
+                                              fontWeight: FontWeight.w600),
                                         ),
-                                        color: Colors.teal,
-                                      ),
+                                        alignment: Alignment.centerRight,
+                                      )),
+                                Container(
+                                  margin: EdgeInsets.only(top: 30),
+                                  height: 50,
+                                  width:
+                                      MediaQuery.of(context).size.width - 40.0,
+                                  decoration: BoxDecoration(
+                                    color: Colors.teal,
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: FlatButton(
+                                    onPressed: () {
+                                      if (!_formKey.currentState.validate()) {
+                                        return;
+                                      }
+                                      if (_formKey.currentState.validate()) {
+//                                              print(this.user.toJson());
+                                        _bloc.add(SendMobileEvent(
+                                            userModel: this.user));
+                                      }
+                                    },
+                                    child: Text(
+                                      translator.translate('next'),
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: FONT_FAMILY,
+                                          fontWeight: FontWeight.w600),
                                     ),
-                                  ]),
+                                    color: Colors.teal,
+                                  ),
+                                ),
+                              ]),
                             );
                           },
                           listener: (context, state) {
                             if (state is SendMobileSuccessState) {
                               Navigator.pop(context);
-                              Navigator.of(context).pushNamedAndRemoveUntil(TripsWidget.routeName, (Route<dynamic> route) => false,
-                              arguments: state.userData);
-
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                  TripsWidget.routeName,
+                                  (Route<dynamic> route) => false,
+                                  arguments: state.userData);
                             }
-                            if (state is  SendMobileFailedState) Navigator.pop(context);
+                            if (state is SendMobileFailedState)
+                              Navigator.pop(context);
                             if (state is GetCountriesSuccessState) {
                               Navigator.pop(context);
                               countries = state.countries;
-                              countryList =  countries.map((e) => e.countryCode).toList();
+                              countryList =
+                                  countries.map((e) => e.countryCode).toList();
                               //   final Map<String, CountryModel> jobSiteMap = new Map();
                               // countries.forEach((CountryModel item) {
                               //   jobSiteMap[item.company] = item;
@@ -268,80 +325,97 @@ class  SendMobileWidgetState extends State< SendMobileWidget> {
                               // companies = jobSiteMap.values.toList();
                               // print(companies);
                             }
-                            if(state is SendMobileLoadingState) {
+                            if (state is SendMobileLoadingState) {
                               loadingAlertDialog(context);
                             }
                           }),
                       SizedBox(
                         height: 15,
                       ),
-                      TextButton.icon(onPressed: (){},
-
-                        icon: Icon(Icons.privacy_tip,color: Colors.blue,)
-                        ,label: Text(translator.translate('privacy'),
-                          style: TextStyle(color: Colors.black, fontFamily: FONT_FAMILY,fontWeight: FontWeight.w400),
+                      TextButton.icon(
+                        onPressed: () {},
+                        icon: Icon(
+                          Icons.privacy_tip,
+                          color: Colors.blue,
+                        ),
+                        label: Text(
+                          translator.translate('privacy'),
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontFamily: FONT_FAMILY,
+                              fontWeight: FontWeight.w400),
                         ),
                       ),
                     ],
                   ),
-            ),
-
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                width: double.infinity,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                  Container(
-                    width: 150.0,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric( vertical: 2.0),
-                      child:DropdownButtonFormField<LanguageModel>(
-                        decoration: InputDecoration(
-                          hintText: translator.translate('lang'),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: double.infinity,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 150.0,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 2.0),
+                            child: DropdownButtonFormField<LanguageModel>(
+                              decoration: InputDecoration(
+                                  hintText: translator.translate('lang'),
 //                          contentPadding: EdgeInsets.only(top: 1.0,bottom: 0.0),
-                          hintStyle: TextStyle(fontFamily: FONT_FAMILY,fontWeight: FontWeight.w600),
-                          prefixIcon: const Icon( Icons.language , color: Colors.teal, ),
-                          border: InputBorder.none
-                        ),
-                        style: TextStyle(fontFamily: FONT_FAMILY,fontWeight: FontWeight.w600, color: Colors.black45),
-                        value: languages.firstWhere((element) => element.code == translator.currentLanguage),
-                        isExpanded: true,
-                        onChanged: (LanguageModel value) {
-                            selectedLang = value;
-                            translator.setNewLanguage(
-                            context,
-                            newLanguage: value.code,
-                            remember: true,
-                            restart: true,
-                          );
-                        },
-                        items: languages.map((LanguageModel lang) {
-                          return  DropdownMenuItem<LanguageModel>(
-                            value: lang,
-                            child: Row(
-                              children: <Widget>[
-                                Text(  translator.translate(lang.lang),
-                                  style:  TextStyle(fontWeight: FontWeight.w400, color: Colors.black54, fontFamily: FONT_FAMILY),
-                                ),
-                              ],
+                                  hintStyle: TextStyle(
+                                      fontFamily: FONT_FAMILY,
+                                      fontWeight: FontWeight.w600),
+                                  prefixIcon: const Icon(
+                                    Icons.language,
+                                    color: Colors.teal,
+                                  ),
+                                  border: InputBorder.none),
+                              style: TextStyle(
+                                  fontFamily: FONT_FAMILY,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black45),
+                              value: languages.firstWhere((element) =>
+                                  element.code == translator.currentLanguage),
+                              isExpanded: true,
+                              onChanged: (LanguageModel value) {
+                                selectedLang = value;
+                                translator.setNewLanguage(
+                                  context,
+                                  newLanguage: value.code,
+                                  remember: true,
+                                  restart: true,
+                                );
+                              },
+                              items: languages.map((LanguageModel lang) {
+                                return DropdownMenuItem<LanguageModel>(
+                                  value: lang,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Text(
+                                        translator.translate(lang.lang),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w400,
+                                            color: Colors.black54,
+                                            fontFamily: FONT_FAMILY),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
                             ),
-                          );
-                        }).toList(),
-                      ) ,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  ],
                 ),
-
-              ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-    ),
       ),
     );
   }

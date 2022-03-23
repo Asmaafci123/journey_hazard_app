@@ -54,17 +54,17 @@ dependencies:
   flutter_typeahead: ^1.8.7
   intl: ^0.17.0
   scoped_model: ^1.0.1
-  flutter_webview_plugin: ^0.3.11
+  flutter_webview_plugin: any
   google_maps_flutter: ^2.0.6
-  geolocator: ^7.1.0
-  geocoder: ^0.2.1
+  geolocator:
+  geocoder: any
   cupertino_icons: ^1.0.2
   flutter_tts: ^3.2.2
   in_app_update: ^2.0.0
   native_updater: ^0.1.0
   new_version: ^0.2.0
   flutter_animarker: ^3.2.0
-  permission_handler: 3.3.0
+  permission_handler:
   intl_phone_number_input: ^0.7.0+2
   wakelock: ^0.5.1
   flutter_polyline_points: ^1.0.0

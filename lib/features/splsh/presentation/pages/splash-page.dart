@@ -12,12 +12,10 @@ import 'package:journeyhazard/core/screen_utils/screen_utils.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:native_updater/native_updater.dart';
 import 'package:journeyhazard/features/trips/presentation/pages/trips.dart';
-import '../../../home.dart';
 import 'logo_widget.dart';
 import 'package:new_version/new_version.dart';
 
 class SplashWidget extends StatefulWidget {
-
   /// splash screen (1)
   static const routeName = 'SplashWidget';
 
@@ -32,7 +30,6 @@ class SplashWidgetState extends State<SplashWidget> {
     androidId: 'com.cemex.journeyhazard',
   );
 
-
   @override
   void initState() {
     super.initState();
@@ -42,6 +39,7 @@ class SplashWidgetState extends State<SplashWidget> {
       setState(() {});
     });
   }
+
   @override
   void dispose() {
     _splashBloc.close();
@@ -49,45 +47,48 @@ class SplashWidgetState extends State<SplashWidget> {
   }
 
   Future<void> checkForUpdate() async {
-    final status = await newVersion.getVersionStatus().then( (value){
+    final status = await newVersion.getVersionStatus().then((value) {
       if (value != null && value?.canUpdate) {
-        newVersion.showUpdateDialog(context: context,
+        newVersion.showUpdateDialog(
+          context: context,
           dialogTitle: "Update",
           versionStatus: value,
-          dialogText: "Hazar recommends that you update to the latest version. You can keep using this app while downloading the update.",
+          dialogText:
+              "Hazar recommends that you update to the latest version. You can keep using this app while downloading the update.",
           dismissAction: () => _splashBloc.add(GetSplashEvent()),
         );
       }
-      }, onError: (err) {
+    }, onError: (err) {
       print(err);
     });
     _splashBloc.add(GetSplashEvent());
   }
 
   @override
-  Widget  build(BuildContext context) {
+  Widget build(BuildContext context) {
     ScreenUtil.init(context, allowFontScaling: true);
     ScreensHelper(context);
     return Scaffold(
       body: Stack(
         children: <Widget>[
-      DecoratedBox(
-      decoration: BoxDecoration(
-          image: DecorationImage(image: AssetImage(SHHNATY_BACK_GROUND), fit: BoxFit.cover),
-    ),
-        child: Container(
-          child: Center(
-                child: AnimatedContainer(
-                  width: ScreensHelper.fromWidth(_logoWidth),
-                  height: ScreensHelper.fromHeight(60),
-                  curve: Curves.bounceOut,
-                  duration: Duration(milliseconds: 1000),
-                  child: LogoWidget(),
-                )
-          //  child: LogoWidget(width: 90.00,),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                  image: AssetImage(SHHNATY_BACK_GROUND), fit: BoxFit.cover),
+            ),
+            child: Container(
+              child: Center(
+                  child: AnimatedContainer(
+                width: ScreensHelper.fromWidth(_logoWidth),
+                height: ScreensHelper.fromHeight(60),
+                curve: Curves.bounceOut,
+                duration: Duration(milliseconds: 1000),
+                child: LogoWidget(),
+              )
+                  //  child: LogoWidget(width: 90.00,),
+                  ),
+            ),
           ),
-        ),
-      ),
           Positioned(
             width: ScreensHelper.width,
             height: ScreensHelper.fromHeight(0.5),
@@ -97,31 +98,35 @@ class SplashWidgetState extends State<SplashWidget> {
               listener: (context, state) {
                 if (state is SplashSuccessState) {
                   // print('${state.goToLoginPage}, ${state.goToHomePage}');
-                  if (state.goToLoginPage ) {
-                    Navigator.pushReplacementNamed(context, LoginWidget.routeName);
+                  if (state.goToLoginPage) {
+                    Navigator.pushReplacementNamed(
+                        context, LoginWidget.routeName);
                   }
 
-                  if (state.goToMobilePage ) {
-                    Navigator.pushReplacementNamed(context, SendMobileWidget.routeName);
+                  if (state.goToMobilePage) {
+                    Navigator.pushReplacementNamed(
+                        context, SendMobileWidget.routeName);
                   }
 
                   if (state.goToHomePage) {
-                    Navigator.pushReplacementNamed(context,
-                        TripsWidget.routeName,arguments:state.userData);
+                    Navigator.pushReplacementNamed(
+                        context, TripsWidget.routeName,
+                        arguments: state.userData);
                   }
                 }
               },
               builder: (context, state) {
-
                 return Center(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: ScreensHelper.fromWidth(33)),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: ScreensHelper.fromWidth(33)),
                     child: ClipRRect(
-                        borderRadius: BorderRadius.circular(ScreensHelper.fromWidth(10)),
+                        borderRadius:
+                            BorderRadius.circular(ScreensHelper.fromWidth(10)),
                         child: LinearProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(GlobalColors.darkGreen),
-                        )
-                    ),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              GlobalColors.darkGreen),
+                        )),
                   ),
                 );
               },

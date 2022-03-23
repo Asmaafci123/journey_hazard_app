@@ -8,7 +8,7 @@ import 'core/services/navigation_service/navigation_service.dart';
 import 'core/sqllite/sqlite_api.dart';
 import 'features/login/data/models/user.dart';
 import 'features/mobile/presentation/pages/send-mobile-page.dart';
-import 'features/home.dart';
+
 import 'features/login/presentation/pages/login-page.dart';
 import 'features/profile/presentation/pages/profile.dart';
 import 'features/splsh/presentation/pages/splash-page.dart';
@@ -19,28 +19,28 @@ import 'features/trips/presentation/pages/trips.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:wakelock/wakelock.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Bloc.observer = MyBlocObserver();
 
   await translator.init(
     localeDefault: LocalizationDefaultType.device,
-    languagesList: <String>['ar', 'en', 'fil','hi','ur'],
+    languagesList: <String>['ar', 'en', 'fil', 'hi', 'ur', 'es'],
     assetsDirectory: 'assets/langs/',
     apiKeyGoogle: '<Key>', // NOT YET TESTED
   ); // intialize
   await CacheHelper.init();
   shipmentId = CacheHelper.getData(key: 'shipmentId');
 
-  final driverDataDB =  await DBHelper.getData('driver_data');
-  if(driverDataDB.isNotEmpty) {
+  final driverDataDB = await DBHelper.getData('driver_data');
+  if (driverDataDB.isNotEmpty) {
     userDataRef = UserModel.fromJson(driverDataDB.first);
-     if( userDataRef.shipmentId != null) CacheHelper.saveData(key: 'shipmentId', value: userDataRef.shipmentId);
+    if (userDataRef.shipmentId != null)
+      CacheHelper.saveData(key: 'shipmentId', value: userDataRef.shipmentId);
     shipmentId = userDataRef.shipmentId;
   }
-    runApp(LocalizedApp(child: MyApp()));
-  }
+  runApp(LocalizedApp(child: MyApp()));
+}
 
 class MyApp extends StatefulWidget {
   @override
@@ -48,15 +48,12 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     Wakelock.enable();
-
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +65,6 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<RiskBloc>(
           create: (BuildContext context) => RiskBloc(),
         ),
-
       ],
       child: MaterialApp(
           localizationsDelegates: translator.delegates,
@@ -93,15 +89,10 @@ class _MyAppState extends State<MyApp> {
             SplashWidget.routeName: (context) => SplashWidget(),
             LoginWidget.routeName: (context) => LoginWidget(),
             SendMobileWidget.routeName: (context) => SendMobileWidget(),
-            HomeWidget.routeName: (context) => HomeWidget(),
+
             TripsWidget.routeName: (context) => TripsWidget(), //map
 //            ProfileWidget.routeName: (context) => ProfileWidget(),
-          }
-      ),
+          }),
     );
   }
 }
-
-
-
-
