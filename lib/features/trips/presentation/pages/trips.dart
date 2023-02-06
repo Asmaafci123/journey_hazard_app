@@ -14,6 +14,7 @@ import 'package:journeyhazard/core/eventsTypes.dart';
 import 'package:journeyhazard/core/sqllite/sqlite_api.dart';
 import 'package:journeyhazard/features/login/data/models/user.dart';
 import 'package:journeyhazard/features/login/presentation/pages/login-page.dart';
+import 'package:journeyhazard/features/mobile/presentation/pages/safety_distnarions_page.dart';
 import 'package:journeyhazard/features/share/loading-dialog.dart';
 import 'package:journeyhazard/features/trips/data/models/jobsite.dart';
 import 'package:journeyhazard/features/trips/data/models/jobsitelist.dart';
@@ -1349,6 +1350,31 @@ class TripsWidgetState extends State<TripsWidget> {
                                   child: IconButton(
                                       onPressed: repeatRisk,
                                       icon: Icon(Icons.refresh,
+                                          color: Colors.blue, size: 30)),
+                                ),
+                              ),
+                              if(userData.company=="Safety")Container(
+                                margin: EdgeInsets.only(top: 10),
+                                padding: EdgeInsets.all(3),
+                                height: 50,
+                                width: 50,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.grey,
+                                ),
+                                child: Material(
+                                  elevation: 6,
+                                  color: Colors.white,
+                                  borderRadius:
+                                  BorderRadius.all(Radius.circular(30)),
+                                  child: IconButton(
+                                      onPressed: ()
+                                      {
+                                        Navigator.pushReplacementNamed(
+                                            context, SafetyDestinationsPage.routeName,
+                                            arguments: userData);
+                                      },
+                                      icon: Icon(Icons.arrow_back,
                                           color: Colors.blue, size: 30)),
                                 ),
                               ),

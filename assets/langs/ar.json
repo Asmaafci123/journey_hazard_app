@@ -59,5 +59,7 @@
   "loading": "جاري التحميل...",
   "selectJobSite":"أختر موقع",
   "jobSites": "مواقع",
-  "company": "شركة"
+  "company": "شركة",
+  "no data found": "لا يوجد",
+  "destination": "جهة الوصول"
 }

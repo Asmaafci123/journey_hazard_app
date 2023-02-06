@@ -15,6 +15,7 @@ class UserModel {
     this.country,
     this.supportNo,
     this.company,
+    this.destination
   });
 
   String mobile;
@@ -22,6 +23,7 @@ class UserModel {
   String country;
   String supportNo;
   String company;
+  String destination;
 
   UserModel copyWith({
     String mobile,
@@ -29,6 +31,7 @@ class UserModel {
     String country,
     String supportNo,
     String company,
+    String destination,
   }) =>
       UserModel(
         mobile: mobile ?? this.mobile,
@@ -36,7 +39,7 @@ class UserModel {
         country: country ?? this.country,
         supportNo: supportNo ?? this.supportNo,
         company: company ?? this.company,
-
+        destination: destination ?? this.destination,
       );
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -45,6 +48,7 @@ class UserModel {
     country:  json["country"] == null ? null : json["country"],
     supportNo: json["supportNo"] == null ? null : json["supportNo"],
     company: json["company"] == null ? null : json["company"],
+    destination: json["destination"] == null ? null : json["destination"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -53,5 +57,6 @@ class UserModel {
     "country": country == null ? null : country,
     "supportNo": supportNo == null ? null : supportNo,
     "company": company == null ? null : company,
+    "destination": destination == null ? null : destination,
   };
 }

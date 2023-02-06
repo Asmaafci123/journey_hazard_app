@@ -9,6 +9,7 @@ import 'package:journeyhazard/features/mobile/data/models/language.dart';
 import 'package:journeyhazard/features/mobile/presentation/bloc/mobile-bloc.dart';
 import 'package:journeyhazard/features/mobile/presentation/bloc/mobile-events.dart';
 import 'package:journeyhazard/features/mobile/presentation/bloc/mobile-state.dart';
+import 'package:journeyhazard/features/mobile/presentation/pages/safety_distnarions_page.dart';
 import 'package:journeyhazard/features/share/loading-dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +29,7 @@ class SendMobileWidgetState extends State<SendMobileWidget> {
   SendMobileBloc _bloc = SendMobileBloc(BaseSendMobileState());
   TextEditingController mobileController = TextEditingController();
   UserModel user = new UserModel(
-      mobile: '', country: '', supportNo: '000', company: 'Cement');
+      mobile: '', country: '', supportNo: '000', company: 'Cement',destination:'');
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _clicked = false;
   CountryModel selectedCountry;
@@ -285,8 +286,23 @@ class SendMobileWidgetState extends State<SendMobileWidget> {
                                       }
                                       if (_formKey.currentState.validate()) {
 //                                              print(this.user.toJson());
-                                        _bloc.add(SendMobileEvent(
-                                            userModel: this.user));
+//                                       print(this.user.company);
+//                                       print('lsdhlfhlskf');
+                                      if(this.user.country=="Egypt" && this.user.company=="Safety")
+                                        {
+                                          Navigator.pop(context);
+                                          Navigator.of(context).pushNamedAndRemoveUntil(
+                                              SafetyDestinationsPage.routeName,
+                                                  (Route<dynamic> route) => false,
+                                              arguments:user);
+                                          // Navigator.pushReplacementNamed(
+                                          //     context, SafetyDestinationsPage.routeName);
+                                        }
+                                      else
+                                        {
+                                          _bloc.add(SendMobileEvent(
+                                              userModel: this.user));
+                                        }
                                       }
                                     },
                                     child: Text(

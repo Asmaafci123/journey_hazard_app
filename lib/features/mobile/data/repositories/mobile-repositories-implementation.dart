@@ -68,4 +68,30 @@ class MobileRepositoryImplementation implements MobileRepository {
       return Result(error: CustomError(message: ErrorHelper().getErrorMessage(response.error)));
     }
   }
+
+  @override
+  Future<Result> getAllDestinations() async{
+    final response = await CoreRepository.request(url: destinationsUrl, method: HttpMethod.GET, converter: null,);
+    if (response.hasDataOnly) {
+//      print(response.data);
+      final res = response.data;
+      final _data = RemoteResultModel.fromJson(res);
+      if (_data.flag) {
+        final res = _data.data;
+       print(res);
+        //CountriesModel newData=  CountriesModel.fromJson({"data":res});
+        return Result(data: res);
+      } else {
+        final msg = _data.message;
+        return Result(error: CustomError(message: msg));
+      }
+    }
+    if (response.hasErrorOnly) {
+      if(response.error is BadRequestError) {
+        BadRequestError error=  response.error ;
+        return Result(error: CustomError(message:error.message));
+      }
+      return Result(error: CustomError(message: ErrorHelper().getErrorMessage(response.error)));
+    }
+  }
 }

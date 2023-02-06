@@ -15,7 +15,7 @@ const String allCountriesUrl = baseUrl +'/risk/CountryList';
 const String MobileSupportUrl = baseUrl +'/Risk/SupportByCountry';
 const String JobSiteRiskUrl = baseUrl +'/JobsiteRisk/GetJobsites';
 const String JobSiteRiskListUrl = baseUrl +'/JobsiteRisk/GetRiskByJobsite';
-
+const String destinationsUrl=baseUrl +'/risk/Destination';
 
 
 const FONT_FAMILY = 'Almarai';

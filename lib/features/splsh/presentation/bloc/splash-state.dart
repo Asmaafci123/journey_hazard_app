@@ -8,9 +8,10 @@ class SplashSuccessState extends BaseSplashState {
   final bool goToHomePage;
   final bool goToLoginPage;
   final bool goToMobilePage;
+  final bool goToSafetDestinationsPage;
   UserModel userData;
 
-  SplashSuccessState({this.goToLoginPage = false, this.goToHomePage = false, this.goToMobilePage = false, this.userData});
+  SplashSuccessState({this.goToLoginPage = false,this.goToSafetDestinationsPage, this.goToHomePage = false, this.goToMobilePage = false, this.userData});
 }
 
 class SplashLoadingState extends BaseSplashState {}

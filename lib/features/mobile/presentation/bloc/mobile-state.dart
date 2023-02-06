@@ -23,3 +23,9 @@ class GetCountriesSuccessState extends BaseSendMobileState {
 
   GetCountriesSuccessState(this.countries);
 }
+class GetDestinationsSuccessState extends BaseSendMobileState {
+
+  List<String> destinations;
+
+  GetDestinationsSuccessState(this.destinations);
+}

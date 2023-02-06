@@ -71,6 +71,7 @@
   "loading": "Loading ...",
   "selectJobSite":"Select JobSite",
   "jobSites": "JobSites",
-  "company": "Company"
-
+  "company": "Company",
+  "no data found": "No data found",
+  "destination":"destination"
 }

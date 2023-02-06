@@ -31,13 +31,40 @@ class SendMobileBloc extends Bloc<BaseMobileEvent, BaseSendMobileState> {
     if (event is  SendMobileEvent) {
       yield  SendMobileLoadingState();
       print('hr${event.userModel.toJson()}');
-      DBHelper.insert('driver_data', event.userModel.toJson());
       UserModel userData;
       final driverDataDB =  await DBHelper.getData('driver_data');
-      if(driverDataDB.isNotEmpty) userData = UserModel.fromJson(driverDataDB.first);
+      if(driverDataDB.isEmpty)
+        {
+          DBHelper.insert('driver_data', event.userModel.toJson());
+          final dt=await DBHelper.getData('driver_data');
+          print(dt.length);
+          userData = UserModel.fromJson(dt.first);
+        }
+      else
+      {
+        DBHelper.update('driver_data', event.userModel.destination, "destination");
+        final dt=await DBHelper.getData('driver_data');
+        print(dt.length);
+        userData = UserModel.fromJson(dt.first);
+      }
       await res.allRisk();
       yield  SendMobileSuccessState(userData: userData);
 
+    }
+    if (event is  GetAllDestinations) {
+      yield  SendMobileLoadingState();
+      final result = await countryRes.getAllDestinations();
+      if(result.hasDataOnly){
+        List<String> destinations=[];
+        for(var element in result.data)
+          {
+           destinations.add(element.toString());
+          }
+        yield  GetDestinationsSuccessState(destinations);
+      } else {
+        final CustomError error = result.error;
+        yield SendMobileFailedState(error);
+      }
     }
   }
 }

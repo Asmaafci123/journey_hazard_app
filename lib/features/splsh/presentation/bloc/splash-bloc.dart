@@ -23,16 +23,20 @@ class SplashBloc extends Bloc<BaseSplashEvent, BaseSplashState> {
     try {
 
        if(event is GetSplashEvent){
-
         yield SplashLoadingState();
-
         if(userData != null && userData.mobile.isNotEmpty){
-          res.allRisk();
-          yield SplashSuccessState(goToLoginPage: false, goToHomePage: true, goToMobilePage: false, userData: userData);
+          if(userData.company=="Safety")
+            {
+              yield SplashSuccessState(goToLoginPage: false,goToSafetDestinationsPage: true, goToHomePage: false, goToMobilePage: false, userData: userData);
+            }
+          else
+            {
+              res.allRisk();
+              yield SplashSuccessState(goToLoginPage: false, goToSafetDestinationsPage: false,goToHomePage: true, goToMobilePage: false, userData: userData);
+            }
        } else {
-         yield SplashSuccessState(goToLoginPage: false, goToHomePage: false, goToMobilePage: true);
+         yield SplashSuccessState(goToLoginPage: false,goToSafetDestinationsPage: false, goToHomePage: false, goToMobilePage: true);
        }
-
       }
     } catch (e, s) {
 //      print(e);

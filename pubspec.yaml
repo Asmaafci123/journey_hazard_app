@@ -71,6 +71,7 @@ dependencies:
   sliding_sheet: ^0.5.2
   carousel_slider: ^4.0.0
   dropdown_search: ^2.0.1
+  lottie: ^1.2.0
 
 #  flutter_speed_dial: ^4.3.0
 
@@ -101,6 +102,7 @@ flutter:
   assets:
     - assets/langs/
     - assets/images/
+    - assets/lottiefiles/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
 

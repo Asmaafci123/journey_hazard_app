@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:journeyhazard/core/bloc_observer.dart';
+import 'package:journeyhazard/features/mobile/presentation/pages/safety_distnarions_page.dart';
 import 'package:localize_and_translate/localize_and_translate.dart';
 import 'core/constants.dart';
 import 'core/services/local_storage/local_storage_service.dart';
@@ -89,7 +90,7 @@ class _MyAppState extends State<MyApp> {
             SplashWidget.routeName: (context) => SplashWidget(),
             LoginWidget.routeName: (context) => LoginWidget(),
             SendMobileWidget.routeName: (context) => SendMobileWidget(),
-
+            SafetyDestinationsPage.routeName:(context)=>SafetyDestinationsPage(),
             TripsWidget.routeName: (context) => TripsWidget(), //map
 //            ProfileWidget.routeName: (context) => ProfileWidget(),
           }),

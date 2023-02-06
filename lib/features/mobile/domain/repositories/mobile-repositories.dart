@@ -6,5 +6,5 @@ import 'package:journeyhazard/features/login/data/models/user.dart';
 abstract class  MobileRepository {
   Future<Result<RemoteResultModel<String>>>  sendMobileUser(UserModel userModel);
   Future<Result<dynamic>>  getCountries();
-
+  Future<Result<dynamic>>  getAllDestinations();
 }

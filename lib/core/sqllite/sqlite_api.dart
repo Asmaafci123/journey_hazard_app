@@ -30,6 +30,7 @@ class DBHelper {
             'country TEXT,'
             'company TEXT,'
             'supportNo TEXT,'
+            'destination TEXT,'
             'shipmentId TEXT)');
 
     await  db.execute(

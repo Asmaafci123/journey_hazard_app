@@ -4,6 +4,7 @@ import 'package:journeyhazard/core/constants.dart';
 import 'package:journeyhazard/core/ui/styles/global_colors.dart';
 import 'package:journeyhazard/features/login/presentation/pages/login-page.dart';
 import 'package:flutter/material.dart';
+import 'package:journeyhazard/features/mobile/presentation/pages/safety_distnarions_page.dart';
 import 'package:journeyhazard/features/mobile/presentation/pages/send-mobile-page.dart';
 import 'package:journeyhazard/features/splsh/presentation/bloc/splash-bloc.dart';
 import 'package:journeyhazard/features/splsh/presentation/bloc/splash-event.dart';
@@ -97,17 +98,22 @@ class SplashWidgetState extends State<SplashWidget> {
               bloc: _splashBloc,
               listener: (context, state) {
                 if (state is SplashSuccessState) {
+                  print(state.goToSafetDestinationsPage);
+                  print(state.goToHomePage);
                   // print('${state.goToLoginPage}, ${state.goToHomePage}');
+                  if (state.goToSafetDestinationsPage) {
+                    Navigator.pushReplacementNamed(
+                        context, SafetyDestinationsPage.routeName,
+                        arguments: state.userData);
+                  }
                   if (state.goToLoginPage) {
                     Navigator.pushReplacementNamed(
                         context, LoginWidget.routeName);
                   }
-
                   if (state.goToMobilePage) {
                     Navigator.pushReplacementNamed(
                         context, SendMobileWidget.routeName);
                   }
-
                   if (state.goToHomePage) {
                     Navigator.pushReplacementNamed(
                         context, TripsWidget.routeName,

@@ -45,8 +45,8 @@ class SplashRepositoryImplementation {
       "MobileNumber" : userMobileData.mobile.toString(),
       "Country": userMobileData.country,
       "Company": userMobileData.company,
+      "Destination": userMobileData.destination,
     };
-//    print(userData);
     // TODO: implement LoginUser
     final response = await CoreRepository.request(url: allRiskUrl, method: HttpMethod.POST, converter: null, data:userData);
     if (response.hasDataOnly) {
