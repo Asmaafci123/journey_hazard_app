@@ -42,6 +42,7 @@ class TripRepositoryImplementation implements TripRepository {
       "MobileNumber": userData.mobile,
       "country": userData.country,
       "Company": userData.company,
+      "Destination":userData.destination
     };
 
     final response = await CoreRepository.request(

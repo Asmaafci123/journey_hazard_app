@@ -49,7 +49,6 @@ class SendMobileBloc extends Bloc<BaseMobileEvent, BaseSendMobileState> {
       }
       await res.allRisk();
       yield  SendMobileSuccessState(userData: userData);
-
     }
     if (event is  GetAllDestinations) {
       yield  SendMobileLoadingState();
@@ -58,6 +57,7 @@ class SendMobileBloc extends Bloc<BaseMobileEvent, BaseSendMobileState> {
         List<String> destinations=[];
         for(var element in result.data)
           {
+            print(element);
            destinations.add(element.toString());
           }
         yield  GetDestinationsSuccessState(destinations);

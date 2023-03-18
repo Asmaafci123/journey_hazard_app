@@ -32,7 +32,9 @@ class TripBloc extends Bloc<BaseTripEvent, BaseTripState> {
 //      yield TripLoadingState();
       var dataDB = await DBHelper.getData('cemex_risk');
       newData = TripsModel.fromJson({"data": dataDB});
-
+      print("completecompletecompletecompletecompletecomplete");
+      print(newData.data.length);
+      print("completecompletecompletecompletecompletecomplete");
       yield TripSuccessState(trips: newData);
     } else if (event is AddHazarEvent) {
       //AddHazarEvent

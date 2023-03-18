@@ -18,6 +18,9 @@ class LoginBloc extends Bloc<BaseEvent, BaseLoginState> {
 
     if (event is LoginEvent) {
       yield LoginLoadingState();
+      print("0000000000000000");
+      print(event.userModel.destination);
+      print("0000000000000000");
       final res = await repo.loginUser(event.userModel);
       if (res.hasErrorOnly) {
 //        print('${res.error}');

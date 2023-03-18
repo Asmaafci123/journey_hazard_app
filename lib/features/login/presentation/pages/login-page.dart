@@ -52,6 +52,7 @@ class LoginWidgetState extends State<LoginWidget> {
       Scaffold.of(context).showSnackBar(
           SnackBar(content: Text(translator.translate('sendData'))));
       this.user?.shipmentId = value.toString();
+      print(this.user);
       _bloc.add(LoginEvent(userModel: this.user));
     });
   }
@@ -145,6 +146,7 @@ class LoginWidgetState extends State<LoginWidget> {
                                   return;
                                 }
                                 if (_formKey.currentState.validate()) {
+                                  print(this.user);
                                   _bloc.add(LoginEvent(userModel: this.user));
                                 }
                               },

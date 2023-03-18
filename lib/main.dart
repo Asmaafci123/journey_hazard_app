@@ -25,10 +25,10 @@ void main() async {
   Bloc.observer = MyBlocObserver();
 
   await translator.init(
-    localeDefault: LocalizationDefaultType.device,
+   localeDefault: LocalizationDefaultType.device,
     languagesList: <String>['ar', 'en', 'fil', 'hi', 'ur', 'es'],
     assetsDirectory: 'assets/langs/',
-    apiKeyGoogle: '<Key>', // NOT YET TESTED
+   // apiKeyGoogle: '<Key>', // NOT YET TESTED
   ); // intialize
   await CacheHelper.init();
   shipmentId = CacheHelper.getData(key: 'shipmentId');

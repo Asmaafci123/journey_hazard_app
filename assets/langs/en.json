@@ -73,5 +73,6 @@
   "jobSites": "JobSites",
   "company": "Company",
   "no data found": "No data found",
-  "destination":"destination"
+  "destination":"destination",
+  "You must ent trip":"You must ent trip "
 }

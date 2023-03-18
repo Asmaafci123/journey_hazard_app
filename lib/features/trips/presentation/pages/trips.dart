@@ -944,6 +944,7 @@ class TripsWidgetState extends State<TripsWidget> {
     print("build Context");
     final arg = ModalRoute.of(context).settings.arguments as UserModel;
     if (arg != null) userData = arg;
+
     return BlocProvider(
       create: (context) => _bloc,
       child: Scaffold(
@@ -1370,7 +1371,11 @@ class TripsWidgetState extends State<TripsWidget> {
                                   child: IconButton(
                                       onPressed: ()
                                       {
-                                        Navigator.pushReplacementNamed(
+                                        (shipmentId != null)?
+                                        show(
+                                            title: "You must ent trip",
+                                            flag: false,
+                                            message: "You must ent trip"):Navigator.pushReplacementNamed(
                                             context, SafetyDestinationsPage.routeName,
                                             arguments: userData);
                                       },

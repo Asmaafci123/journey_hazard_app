@@ -47,8 +47,9 @@ class MobileRepositoryImplementation implements MobileRepository {
   Future<Result<dynamic>> getCountries() async{
     final response = await CoreRepository.request(url: allCountriesUrl, method: HttpMethod.GET, converter: null,);
     if (response.hasDataOnly) {
-//      print(response.data);
+     print('${response.data} 99999999999999999999999');
       final res = response.data;
+
       final _data = RemoteResultModel.fromJson(res);
       if (_data.flag) {
         final res = _data.data;
@@ -73,7 +74,10 @@ class MobileRepositoryImplementation implements MobileRepository {
   Future<Result> getAllDestinations() async{
     final response = await CoreRepository.request(url: destinationsUrl, method: HttpMethod.GET, converter: null,);
     if (response.hasDataOnly) {
-//      print(response.data);
+     //  print(destinationsUrl);
+     //  print("hhhhhhhhhhhhhhhh");
+     // print(response.data);
+     //  print("hhhhhhhhhhhhhhhh");
       final res = response.data;
       final _data = RemoteResultModel.fromJson(res);
       if (_data.flag) {
@@ -81,7 +85,7 @@ class MobileRepositoryImplementation implements MobileRepository {
        print(res);
         //CountriesModel newData=  CountriesModel.fromJson({"data":res});
         return Result(data: res);
-      } else {
+      }else {
         final msg = _data.message;
         return Result(error: CustomError(message: msg));
       }

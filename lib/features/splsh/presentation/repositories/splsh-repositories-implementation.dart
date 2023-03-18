@@ -50,11 +50,15 @@ class SplashRepositoryImplementation {
     // TODO: implement LoginUser
     final response = await CoreRepository.request(url: allRiskUrl, method: HttpMethod.POST, converter: null, data:userData);
     if (response.hasDataOnly) {
-//      print(response.data);
+
       final res = response.data;
       final _data = RemoteResultModel.fromJson(res);
       if (_data.flag) {
         final res = _data.data;
+        print("0000000000000000000");
+        // print(userData);
+        print(res.length);
+        print("0000000000000000000");
         TripsModel newData=  TripsModel.fromJson({"data":res});
         if ( newData.data.isNotEmpty) {
           await DBHelper.deleteAll('cemex_risk');

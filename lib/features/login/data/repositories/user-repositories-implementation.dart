@@ -51,16 +51,23 @@ class LoginRepositoryImplementation implements UserRepository {
       "MobileNumber" : userMobileData.mobile.toString(),
       "country" : userMobileData.country,
       "Company": userMobileData.company,
+      "Destination":userMobileData.destination.toString()
     };
+    print("999999999999999999999999999999");
     print(userData);
+    print("999999999999999999999999999999");
     // TODO: implement LoginUser
     final response = await CoreRepository.request(url: loginUrl, method: HttpMethod.POST, converter: null, data:userData);
     if (response.hasDataOnly) {
 //      print(response.data);
       final res = response.data;
+
       final _data = RemoteResultModel.fromJson(res);
       if (_data.flag) {
         final res = _data.data;
+        print("UpdateUpdateUpdateUpdateUpdateUpdateUpdateUpdate");
+        print(res.length);
+        print("UpdateUpdateUpdateUpdateUpdateUpdateUpdateUpdate");
         DBHelper.update('driver_data', userModel.shipmentId, 'shipmentId');
         CacheHelper.saveData(key: 'shipmentId',value: userModel.shipmentId).then((value)
         {
