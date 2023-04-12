@@ -162,6 +162,7 @@ class TripsWidgetState extends State<TripsWidget> {
         }
       },
     );
+    _bloc.add(GetTripEvent());
     super.initState();
 
     // startIt();
